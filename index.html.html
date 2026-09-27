@@ -1,0 +1,1416 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#171614">
+<meta name="application-name" content="chess.master">
+<meta name="version" content="2026.09-final">
+<title>chess.master</title>
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js" defer></script>
+<style>
+:root{
+  --bg:#171614;--panel:#242321;--panel2:#2e2c2a;--panel3:#383532;--line:#45413d;
+  --text:#f0eee9;--muted:#aaa59f;--accent:#8bc34a;--accent2:#a9dc68;--danger:#e45b5b;
+  --light:#f0d9b5;--dark:#b58863;--sqHover:rgba(255,255,255,.14);--shadow:0 14px 38px rgba(0,0,0,.28);
+}
+body.light{
+  --bg:#f4f3f1;--panel:#ffffff;--panel2:#f0efed;--panel3:#e6e4e1;--line:#d7d4cf;
+  --text:#272522;--muted:#706d68;--accent:#6fae2b;--accent2:#588f1a;--danger:#c83d3d;
+  --sqHover:rgba(0,0,0,.08);--shadow:0 12px 30px rgba(0,0,0,.10);
+}
+*{box-sizing:border-box}html,body{height:100%;margin:0}
+body[data-board-theme="forest"]{--light:#e8efd2;--dark:#769656}
+body[data-board-theme="blue"]{--light:#d9e8f5;--dark:#5b7fa3}
+body[data-board-theme="purple"]{--light:#eee2f4;--dark:#8a6d9d}
+body[data-board-theme="wood"]{--light:#e7c79f;--dark:#9a6a43}
+body{font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--text);overflow:hidden}
+button,input,select{font:inherit}button{cursor:pointer;border:0}
+#app{display:grid;grid-template-columns:230px 1fr;height:100vh}
+.sidebar{background:var(--panel);border-right:1px solid var(--line);padding:18px 14px;display:flex;flex-direction:column;gap:10px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:21px;letter-spacing:.2px;padding:8px 10px 18px}
+.logo{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#5e8e27);display:grid;place-items:center;color:#10150c;font-size:20px;box-shadow:0 8px 20px rgba(105,160,49,.28)}
+.nav{display:flex;flex-direction:column;gap:5px}
+.nav button{background:transparent;color:var(--muted);padding:12px 13px;border-radius:10px;text-align:left;display:flex;align-items:center;gap:11px;font-weight:700}
+.nav button:hover{background:var(--panel2);color:var(--text)}.nav button.active{background:var(--panel3);color:var(--text)}
+.userbox{margin-top:auto;border-top:1px solid var(--line);padding-top:13px}.userrow{display:flex;align-items:center;gap:10px;padding:9px}
+.avatar{width:34px;height:34px;border-radius:50%;background:var(--panel3);display:grid;place-items:center;font-weight:800}
+.usertext{min-width:0}.usertext strong{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.usertext span{font-size:12px;color:var(--muted)}
+.main{min-width:0;overflow:auto;padding:24px}
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;gap:14px}.title{font-size:26px;font-weight:850}.subtitle{color:var(--muted);font-size:13px;margin-top:3px}
+.actions{display:flex;gap:8px;flex-wrap:wrap}.btn{background:var(--panel2);color:var(--text);padding:11px 15px;border-radius:9px;font-weight:750;border:1px solid var(--line)}.btn:hover{background:var(--panel3)}
+.btn.primary{background:var(--accent);color:#12200a;border-color:transparent}.btn.primary:hover{background:var(--accent2)}.btn.danger{background:transparent;color:#ff9d9d;border-color:#663737}
+.page{display:none}.page.active{display:block}.grid{display:grid;gap:16px}.grid2{grid-template-columns:minmax(300px,680px) minmax(280px,1fr)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:18px}.card h3{margin:0 0 12px;font-size:16px}.muted{color:var(--muted)}
+.quick{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.quick .card{cursor:pointer;transition:.16s}.quick .card:hover{transform:translateY(-2px);background:var(--panel2)}
+.quick .bigicon{font-size:30px;margin-bottom:8px}.quick strong{display:block;margin-bottom:4px}.quick span{font-size:13px;color:var(--muted)}
+.setup{max-width:680px}.setup .row{display:flex;gap:10px;flex-wrap:wrap}.choice{padding:11px 15px;border-radius:9px;background:var(--panel2);color:var(--text);border:1px solid var(--line);font-weight:750}.choice.active{background:var(--accent);color:#12200a;border-color:transparent}
+.boardWrap{display:flex;justify-content:center}.boardShell{width:min(78vh,680px,calc(100vw - 420px));min-width:300px}.boardArea{position:relative;width:100%}
+.board{width:100%;aspect-ratio:1;display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr);overflow:hidden;border-radius:8px;box-shadow:0 18px 45px rgba(0,0,0,.32);border:1px solid rgba(0,0,0,.2);user-select:none;touch-action:none}
+.square{position:relative;display:flex;align-items:center;justify-content:center;cursor:pointer}.square.light{background:var(--light)}.square.dark{background:var(--dark)}
+.square:hover{box-shadow:inset 0 0 0 999px var(--sqHover)}
+.square.last::after{content:"";position:absolute;inset:0;background:rgba(221,194,62,.38);pointer-events:none}.square.selected::after{content:"";position:absolute;inset:0;background:rgba(245,226,83,.55);pointer-events:none}
+.square.check{box-shadow:inset 0 0 0 999px rgba(208,38,38,.58)}
+.square.marked::before{content:"";position:absolute;inset:12%;border-radius:50%;background:rgba(235,183,47,.50);z-index:1;pointer-events:none}
+.piece{position:relative;z-index:3;font-family:"DejaVu Sans","Segoe UI Symbol",serif;font-size:clamp(34px,7.2vw,72px);line-height:1;transform:translateY(-1%);filter:drop-shadow(0 3px 2px rgba(0,0,0,.26));pointer-events:none}.square.drag-source .piece{opacity:.22}.dragGhost{position:absolute;z-index:30;pointer-events:none;font-family:"DejaVu Sans","Segoe UI Symbol",serif;font-size:clamp(34px,7.2vw,72px);line-height:1;transform:translate(-50%,-50%);filter:drop-shadow(0 5px 4px rgba(0,0,0,.38));will-change:left,top}.dragGhost.white{color:#fff;-webkit-text-stroke:1.8px #3b3732;paint-order:stroke fill;text-shadow:0 1px 0 #222,0 2px 3px rgba(0,0,0,.34)}.dragGhost.black{color:#1f1e1c;-webkit-text-stroke:1.6px #f6f4ef;paint-order:stroke fill;text-shadow:0 2px 3px rgba(0,0,0,.38)}.dragTrail{position:absolute;z-index:29;pointer-events:none;font-family:"DejaVu Sans","Segoe UI Symbol",serif;font-size:clamp(28px,5.8vw,58px);line-height:1;transform:translate(-50%,-50%);opacity:.32;animation:dragFade .42s ease-out forwards;filter:blur(.15px)}.dragTrail.white{color:#fff;-webkit-text-stroke:1.3px #3b3732;paint-order:stroke fill}.dragTrail.black{color:#1f1e1c;-webkit-text-stroke:1.2px #f6f4ef;paint-order:stroke fill}@keyframes dragFade{from{opacity:.38;transform:translate(-50%,-50%) scale(1)}to{opacity:0;transform:translate(-50%,-50%) scale(.92)}}
+.piece.white{color:#fff;-webkit-text-stroke:1.8px #3b3732;paint-order:stroke fill;text-shadow:0 1px 0 #222,0 2px 3px rgba(0,0,0,.34)}
+.piece.black{color:#1f1e1c;-webkit-text-stroke:1.6px #f6f4ef;paint-order:stroke fill;text-shadow:0 2px 3px rgba(0,0,0,.38)}
+.legalDot{width:18%;height:18%;border-radius:50%;background:rgba(30,30,25,.36);position:absolute;z-index:2}.captureRing{position:absolute;inset:6%;border:5px solid rgba(35,35,30,.36);border-radius:50%;z-index:2}
+.coord{position:absolute;font-size:11px;font-weight:800;z-index:4;line-height:1}.coord.file{right:4px;bottom:3px}.coord.rank{left:4px;top:3px}.light .coord{color:var(--dark)}.dark .coord{color:var(--light)}
+.arrows{position:absolute;inset:0;z-index:2;pointer-events:none;overflow:visible}.arrowPath{fill:none;stroke-width:5.2;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke;filter:drop-shadow(0 1px 1px rgba(0,0,0,.34))}.arrowGlow{fill:none;stroke:rgba(255,255,255,.12);stroke-width:7.4;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke;opacity:.30}.arrowHead{stroke:none;filter:drop-shadow(0 1px 1px rgba(0,0,0,.28))}.arrowPreview{opacity:.76}.arrowKnight{stroke-linecap:round;stroke-linejoin:round}
+.gameLayout{display:grid;grid-template-columns:minmax(320px,700px) minmax(280px,380px);gap:18px;align-items:start;justify-content:center}.sidePanel{display:flex;flex-direction:column;gap:12px}
+.clock{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 15px;display:flex;align-items:center;justify-content:space-between}.clock.active{outline:2px solid var(--accent)}.clock .who{font-weight:800}.clock .time{font-variant-numeric:tabular-nums;font-size:27px;font-weight:900;letter-spacing:.5px}.clock.low .time{color:#ffae65}
+.status{padding:10px 12px;border-radius:9px;background:var(--panel2);color:var(--muted);font-size:13px}.moves{max-height:390px;overflow:auto;border:1px solid var(--line);border-radius:10px;background:var(--panel2)}
+.moveRow{display:grid;grid-template-columns:38px 1fr 1fr;border-bottom:1px solid rgba(127,127,127,.15);padding:7px 9px;gap:6px;font-size:14px}.moveRow:last-child{border-bottom:0}.moveNo{color:var(--muted);font-weight:800}.moveCell{padding:5px 6px;border-radius:6px;cursor:pointer}.moveCell:hover{background:var(--panel3)}.moveCell.selected{background:var(--accent);color:#14200d;font-weight:800}
+.center{text-align:center}.empty{padding:24px;color:var(--muted);text-align:center}.form{display:flex;flex-direction:column;gap:10px}.field{display:flex;flex-direction:column;gap:6px}.field label{font-size:13px;color:var(--muted);font-weight:700}.field input,.field select{background:var(--panel2);border:1px solid var(--line);border-radius:9px;color:var(--text);padding:11px 12px;outline:none}.field input:focus{border-color:var(--accent)}
+.loginBox{max-width:440px;margin:30px auto}.split{display:grid;grid-template-columns:1fr 1fr;gap:12px}.roomCode{font-size:36px;letter-spacing:7px;font-weight:900;text-align:center;padding:16px 0}.infoBox{background:var(--panel2);border-radius:10px;padding:12px;font-size:13px;color:var(--muted)}
+.historyItem{display:grid;grid-template-columns:1fr auto;gap:8px;padding:12px 0;border-bottom:1px solid var(--line)}.historyItem:last-child{border-bottom:0}.resultWin{color:#a7de69}.resultLose{color:#ff9d9d}.resultDraw{color:#d0cc83}
+.settingRow{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 0;border-bottom:1px solid var(--line)}.settingRow:last-child{border-bottom:0}.switch{width:48px;height:27px;border-radius:99px;background:var(--panel3);position:relative}.switch span{width:21px;height:21px;border-radius:50%;background:#fff;position:absolute;top:3px;left:3px;transition:.16s}.switch.on{background:var(--accent)}.switch.on span{left:24px}
+.analysisLayout{display:grid;grid-template-columns:minmax(320px,620px) minmax(280px,1fr);gap:18px;align-items:start}.analysisMoves{max-height:520px;overflow:auto}.engine{display:grid;grid-template-columns:1fr 1fr;gap:8px}.metric{background:var(--panel2);border-radius:10px;padding:10px}.metric small{display:block;color:var(--muted);margin-bottom:3px}.metric strong{font-size:18px}
+.toast{position:fixed;right:20px;bottom:20px;background:#10100f;color:#fff;border:1px solid #37332f;padding:11px 14px;border-radius:10px;opacity:0;transform:translateY(10px);pointer-events:none;transition:.2s;z-index:99}.toast.show{opacity:1;transform:none}
+.authOverlay{position:fixed;inset:0;background:#151513;display:grid;place-items:center;z-index:200;padding:18px;overflow:hidden}.authOverlay::before{content:"";position:absolute;inset:-8%;background:radial-gradient(circle at 50% 42%,rgba(112,154,67,.20),transparent 28%),radial-gradient(circle at 15% 78%,rgba(255,255,255,.07),transparent 24%),radial-gradient(circle at 88% 18%,rgba(124,96,57,.14),transparent 30%),linear-gradient(rgba(19,19,18,.24),rgba(8,8,8,.70));z-index:0}.authOverlay::after{content:"♟    ♞    ♜    ♝    ♛    ♚";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;white-space:pre;letter-spacing:4.4vw;font-family:"DejaVu Sans","Segoe UI Symbol",serif;font-size:min(25vw,300px);color:rgba(255,255,255,.055);filter:blur(2px);transform:translateY(8vh) rotate(-6deg);z-index:0;pointer-events:none}.authOverlay{background-image:linear-gradient(45deg,rgba(255,255,255,.035) 25%,transparent 25%,transparent 75%,rgba(255,255,255,.035) 75%),linear-gradient(45deg,rgba(255,255,255,.035) 25%,transparent 25%,transparent 75%,rgba(255,255,255,.035) 75%);background-size:84px 84px;background-position:0 0,42px 42px}.authModal{position:relative;z-index:2;width:min(460px,100%);background:rgba(45,43,40,.97);border:1px solid rgba(255,255,255,.10);border-radius:14px;padding:26px;box-shadow:0 26px 80px rgba(0,0,0,.62),0 2px 0 rgba(255,255,255,.035) inset;backdrop-filter:blur(12px)}.authHero{display:flex;align-items:center;gap:12px;margin-bottom:18px}.authHero .logo{width:46px;height:46px;font-size:25px}.authHero h2{margin:0;font-size:24px;letter-spacing:-.3px}.authHero p{margin:4px 0 0;color:#b8b2aa;font-size:13px}.authGuest{background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:13px}.authGuest strong{display:block;margin-bottom:4px}.authGuest .btn{background:rgba(255,255,255,.06)}.authModal input{background:#3a3734;border-color:#514d49}.authModal input:focus{outline:none;border-color:#8bc34a;box-shadow:0 0 0 3px rgba(139,195,74,.12)}.authModal .btn.primary{min-height:44px;font-size:15px}.authModal .btn:not(.primary){min-height:44px}.authOverlay .field label{color:#d3cec6}.authOverlay .muted{color:#aaa49d}.promotionOverlay{position:fixed;inset:0;background:rgba(0,0,0,.55);display:grid;place-items:center;z-index:180;padding:18px}.promotionModal{width:min(420px,100%);background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:0 25px 70px rgba(0,0,0,.45)}.promotionChoices{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px}.promoBtn{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px;color:var(--text);font-weight:900;font-size:34px}.promoBtn:hover{background:var(--panel3);transform:translateY(-1px)}@media(max-width:560px){.promotionChoices{grid-template-columns:1fr 1fr}.promoBtn{font-size:30px}}
+.bottomNav{display:none}
+@media(max-width:1050px){#app{grid-template-columns:78px 1fr}.sidebar{padding:14px 9px}.brand{justify-content:center;padding:8px 0 16px}.brand .brandText,.nav button span,.usertext{display:none}.nav button{justify-content:center;padding:12px}.userrow{justify-content:center}.gameLayout,.analysisLayout{grid-template-columns:1fr}.boardShell{width:min(86vw,680px)}}
+@media(max-width:760px){body{overflow:auto}#app{display:block;height:auto;min-height:100vh}.sidebar{display:none}.main{padding:14px 14px 82px}.topbar{align-items:flex-start}.title{font-size:22px}.quick{grid-template-columns:1fr}.split{grid-template-columns:1fr}.gameLayout{gap:12px}.boardShell{width:min(94vw,680px);min-width:0}.piece{font-size:clamp(32px,11vw,68px)}.moves{max-height:280px}.bottomNav{position:fixed;display:grid;grid-template-columns:repeat(5,1fr);left:0;right:0;bottom:0;background:var(--panel);border-top:1px solid var(--line);z-index:50}.bottomNav button{background:transparent;color:var(--muted);padding:8px 2px 9px;font-size:11px}.bottomNav button.active{color:var(--accent)}.bottomNav .ico{font-size:18px;display:block}.coord{font-size:9px}}
+
+.modalOverlay{position:fixed;inset:0;background:rgba(0,0,0,.72);backdrop-filter:blur(7px);display:grid;place-items:center;z-index:260;padding:18px}.decisionModal{width:min(440px,100%);background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:0 30px 90px rgba(0,0,0,.48)}.decisionModal h3{margin:0 0 7px}.decisionModal p{margin:0;color:var(--muted);line-height:1.5}.decisionActions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px;flex-wrap:wrap}.decisionActions .btn{min-width:92px}.drawOfferBanner{margin-top:10px;padding:11px 12px;border:1px solid #8b7b2c;background:rgba(226,193,44,.10);border-radius:10px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.previewBoardShell{width:min(72vw,520px)}.previewModal{width:min(900px,100%);max-height:90vh;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:0 30px 90px rgba(0,0,0,.48)}.previewLayout{display:grid;grid-template-columns:minmax(280px,520px) minmax(220px,1fr);gap:16px;align-items:start}.previewInfo{display:grid;gap:10px}.previewNav{display:flex;gap:8px;flex-wrap:wrap}.previewMove{font-weight:800;font-size:17px}.soundTestGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.smallBtn{padding:8px 10px;font-size:13px}.statusRow{display:flex;align-items:center;justify-content:space-between;gap:10px}.onlineBadge{display:inline-flex;align-items:center;gap:6px;padding:5px 9px;border-radius:999px;background:var(--panel2);font-size:12px;font-weight:800}.onlineDot{width:8px;height:8px;border-radius:50%;background:#8bc34a}.onlineDot.off{background:#d56b6b}@media(max-width:760px){.previewLayout{grid-template-columns:1fr}.previewBoardShell{width:min(90vw,520px)}}
+.boardToolRow{display:flex;gap:8px;flex-wrap:wrap}.captureTray{display:flex;align-items:center;gap:4px;flex-wrap:wrap;min-height:28px}.capturedPiece{font-family:"DejaVu Sans","Segoe UI Symbol",serif;font-size:22px;line-height:1;filter:drop-shadow(0 2px 1px rgba(0,0,0,.22))}.advancedGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.toolValue{width:100%;min-height:94px;resize:vertical}.roomCreateModal{width:min(520px,100%);background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:0 30px 90px rgba(0,0,0,.48)}.roomModalCodeInput{font-size:24px;letter-spacing:5px;text-align:center;font-weight:900}.ratingBadge{display:inline-flex;align-items:center;padding:4px 8px;border-radius:999px;background:var(--panel2);font-size:12px;font-weight:850}.engineBar{height:10px;background:var(--panel3);border-radius:999px;overflow:hidden}.engineBar>span{display:block;height:100%;background:var(--accent);width:0;transition:.2s}.notice{padding:10px 12px;border-radius:10px;background:rgba(139,195,74,.10);border:1px solid rgba(139,195,74,.3);font-size:13px}.dangerNotice{padding:10px 12px;border-radius:10px;background:rgba(228,91,91,.09);border:1px solid rgba(228,91,91,.28);font-size:13px}.boardShell:fullscreen{padding:16px;background:#111}.boardShell:fullscreen .board{height:calc(100vh - 32px);width:auto;max-width:calc(100vw - 32px);margin:auto}.arrowPreview{opacity:.85}.fileActionNote{margin-top:10px;padding:10px 12px;border-radius:10px;background:var(--panel2);border:1px solid var(--line);font-size:12px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div id="app">
+  <aside class="sidebar">
+    <div class="brand"><div class="logo">♞</div><div class="brandText">chess.master</div></div>
+    <nav class="nav" id="nav">
+      <button data-page="home" class="active"><b>⌂</b><span>홈</span></button>
+      <button data-page="play"><b>♟</b><span>플레이</span></button>
+      <button data-page="bot"><b>🤖</b><span>봇과 플레이</span></button>
+      <button data-page="online"><b>◎</b><span>온라인 플레이</span></button>
+      <button data-page="analysis"><b>⌘</b><span>분석</span></button>
+      <button data-page="history"><b>◷</b><span>경기 기록</span></button>
+      <button data-page="profile"><b>♙</b><span>프로필</span></button>
+      <button data-page="settings"><b>⚙</b><span>설정</span></button>
+    </nav>
+    <div class="userbox">
+      <div id="userArea"></div>
+    </div>
+  </aside>
+  <main class="main">
+    <section id="page-home" class="page active">
+      <div class="topbar"><div><div class="title">chess.master에서 체스를 시작하세요</div><div class="subtitle">빠르게 시작하거나 봇·온라인 상대와 대국할 수 있습니다.</div></div></div>
+      <div class="quick">
+        <div class="card" data-open="play"><div class="bigicon">♟</div><strong>플레이</strong><span>같은 기기에서 바로 체스 시작</span></div>
+        <div class="card" data-open="bot"><div class="bigicon">🤖</div><strong>봇과 플레이</strong><span>인터넷 없이 AI와 대국</span></div>
+        <div class="card" data-open="online"><div class="bigicon">◎</div><strong>온라인 플레이</strong><span>방번호로 상대와 연결</span></div>
+      </div>
+      <div style="height:16px"></div>
+      <div class="grid grid2">
+        <div class="card boardWrap"><div class="boardShell"><div class="boardArea"><div class="board" id="homeBoard"></div><svg class="arrows" id="homeArrows"></svg></div></div></div>
+        <div class="grid">
+          <div class="card"><h3>최근 경기</h3><div id="homeHistory"></div></div>
+          <div class="card"><h3>마지막 경기 분석</h3><div id="homeAnalysis"></div><button class="btn" style="margin-top:10px" data-page="analysis">분석 열기</button></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="page-play" class="page">
+      <div class="topbar"><div><div class="title">플레이</div><div class="subtitle">친구와 같은 기기에서 둘이 대국합니다.</div></div></div>
+      <div id="playSetup" class="card setup">
+        <h3>게임 설정</h3>
+        <div class="field"><label>시간</label><div class="row" id="playTimeChoices"></div></div>
+        <div class="field"><label>내 색상 표시</label><div class="row" id="playColorChoices"></div></div>
+        <div style="height:7px"></div><button class="btn primary" id="startLocal">게임 시작</button>
+      </div>
+      <div id="playGame" style="display:none"></div>
+    </section>
+
+    <section id="page-bot" class="page">
+      <div class="topbar"><div><div class="title">봇과 플레이</div><div class="subtitle">로컬에서 실제 수를 계산해 움직이는 AI와 대국합니다.</div></div></div>
+      <div id="botSetup" class="card setup">
+        <h3>봇 게임 설정</h3>
+        <div class="field"><label>시간</label><div class="row" id="botTimeChoices"></div></div>
+        <div class="field"><label>내 색상</label><div class="row" id="botColorChoices"></div></div>
+        <div class="field"><label>봇 난이도</label><div class="row" id="botDiffChoices"></div><div class="infoBox" id="botDiffInfo" style="margin-top:8px">1~6단계로 세밀하게 조절합니다. 단계가 높을수록 탐색 깊이와 포지션 평가가 강화됩니다.</div></div>
+        <div style="height:7px"></div><button class="btn primary" id="startBot">봇 게임 시작</button>
+      </div>
+      <div id="botGame" style="display:none"></div>
+    </section>
+
+    <section id="page-online" class="page">
+      <div class="topbar"><div><div class="title">온라인 플레이</div><div class="subtitle">방번호를 공유해 한 명의 상대와 P2P로 연결합니다.</div></div></div>
+      <div id="onlineSetup" class="grid grid2">
+        <div class="card setup">
+          <h3>새 방 만들기</h3>
+          <div class="field"><label>게임 시간</label><div class="row" id="onlineTimeChoices"></div></div>
+          <div style="height:7px"></div><button class="btn primary" id="createRoom">방 만들기</button>
+          <div class="infoBox" style="margin-top:12px">방을 만든 사람은 백으로 시작합니다. 상대는 방번호를 입력해 흑으로 들어옵니다. 같은 방에는 최대 2명만 참가합니다.</div>
+        </div>
+        <div class="card setup">
+          <h3>방번호로 참가</h3>
+          <div class="field"><label>6자리 방번호</label><input id="joinCode" inputmode="numeric" maxlength="6" placeholder="예: 483921"></div>
+          <div style="height:7px"></div><div class="actions"><button class="btn primary" id="joinRoom">방 참가</button><button class="btn" id="clearJoinCode">입력 지우기</button></div>
+          <div class="infoBox" style="margin-top:12px">온라인 기능은 인터넷 연결과 무료 공개 PeerJS 시그널링 서버를 사용합니다.</div>
+        </div>
+      </div>
+      <div id="onlineGame" style="display:none"></div>
+    </section>
+
+    <section id="page-analysis" class="page">
+      <div class="topbar"><div><div class="title">경기 분석</div><div class="subtitle">마지막으로 끝난 게임의 수순과 보드를 다시 확인합니다.</div></div></div>
+      <div id="analysisRoot"></div>
+    </section>
+
+    <section id="page-history" class="page">
+      <div class="topbar"><div><div class="title">경기 기록</div><div class="subtitle">로그인한 계정의 로컬 경기 기록입니다.</div></div></div>
+      <div class="card" id="historyRoot"></div>
+    </section>
+
+
+    <section id="page-profile" class="page">
+      <div class="topbar"><div><div class="title">프로필</div><div class="subtitle">전적과 레이팅, 개인 설정을 한 곳에서 확인합니다.</div></div></div>
+      <div id="profileRoot"></div>
+    </section>
+    <section id="page-settings" class="page">
+      <div class="topbar"><div><div class="title">설정</div><div class="subtitle">보드와 사운드 표시를 바꿀 수 있습니다.</div></div></div>
+      <div class="card" id="settingsRoot"></div>
+    </section>
+  </main>
+</div>
+<div class="bottomNav" id="bottomNav">
+  <button data-page="home" class="active"><span class="ico">⌂</span>홈</button>
+  <button data-page="play"><span class="ico">♟</span>플레이</button>
+  <button data-page="bot"><span class="ico">🤖</span>봇</button>
+  <button data-page="online"><span class="ico">◎</span>온라인</button>
+  <button data-page="settings"><span class="ico">⚙</span>설정</button>
+</div>
+<div id="toast" class="toast"></div>
+
+<script>
+(function(){
+'use strict';
+const $=id=>document.getElementById(id);
+const qs=(s,r=document)=>r.querySelector(s);const qsa=(s,r=document)=>[...r.querySelectorAll(s)];
+const FILES='abcdefgh';
+const GLYPH={w:{k:'♔',q:'♕',r:'♖',b:'♗',n:'♘',p:'♙'},b:{k:'♚',q:'♛',r:'♜',b:'♝',n:'♞',p:'♟'}};
+const PIECE_VALUE={p:100,n:320,b:330,r:500,q:900,k:20000};
+const TIMES={1:60,5:300,10:600,20:1200};
+const BOT_LEVELS={
+  level1:{label:'1단계 · 초급',depth:1,random:.55,budget:60,delay:250},
+  level2:{label:'2단계 · 쉬움',depth:1,random:.20,budget:120,delay:300},
+  level3:{label:'3단계 · 초중급',depth:2,random:.06,budget:250,delay:380},
+  level4:{label:'4단계 · 중급',depth:3,random:0,budget:500,delay:480},
+  level5:{label:'5단계 · 고급',depth:3,random:0,budget:850,delay:620},
+  level6:{label:'6단계 · 마스터',depth:4,random:0,budget:1200,delay:800}
+};
+const BOT_COMPAT={easy:'level2',normal:'level3',hard:'level4'};
+const DEFAULT_SETTINGS={theme:'dark',boardTheme:'classic',coords:true,legal:true,last:true,animation:true,sound:true,volume:.9};
+let settings={...DEFAULT_SETTINGS,...loadJson('cn-settings',{})};{const n=Number(settings.volume);settings.volume=Number.isFinite(n)?Math.min(1.2,Math.max(0,n)):DEFAULT_SETTINGS.volume;}let session=localStorage.getItem('cn-session')||'';
+let currentPage='home', audioCtx=null, toastTimer=null, guestMode=false, authShown=false;
+let online={peer:null,conn:null,host:false,room:'',color:null,ready:false,time:10};
+let activeGame=null, analysisData=null, analysisIndex=0;
+
+function loadJson(k,f){try{const v=JSON.parse(localStorage.getItem(k));return v??f}catch{return f}}
+function saveJson(k,v){localStorage.setItem(k,JSON.stringify(v))}
+function toast(msg){$('toast').textContent=msg;$('toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('show'),2200)}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
+function uid(){return Math.random().toString(36).slice(2,10)}
+function cloneBoard(b){return b.map(r=>r.slice())}
+function cloneState(st){return {board:cloneBoard(st.board),turn:st.turn,castle:{...st.castle},ep:st.ep,half:st.half,full:st.full,whiteTime:st.whiteTime,blackTime:st.blackTime,last:st.last,history:st.history.map(x=>({...x})),snapshots:[]}}
+function initialBoard(){return [
+ ['r','n','b','q','k','b','n','r'],
+ ['p','p','p','p','p','p','p','p'],
+ [null,null,null,null,null,null,null,null],
+ [null,null,null,null,null,null,null,null],
+ [null,null,null,null,null,null,null,null],
+ [null,null,null,null,null,null,null,null],
+ ['P','P','P','P','P','P','P','P'],
+ ['R','N','B','Q','K','B','N','R']
+]}
+function makeSnapshot(st){return {board:cloneBoard(st.board),turn:st.turn,castle:{...st.castle},ep:st.ep?[st.ep[0],st.ep[1]]:null,half:st.half,full:st.full,whiteTime:st.whiteTime,blackTime:st.blackTime,last:st.last?{from:st.last.from.slice(),to:st.last.to.slice()}:null};}
+function newState(minutes=10){
+  const board=initialBoard();
+  const st={board,turn:'w',castle:{wK:true,wQ:true,bK:true,bQ:true},ep:null,half:0,full:1,whiteTime:TIMES[minutes]||600,blackTime:TIMES[minutes]||600,last:null,history:[],snapshots:[]};
+  st.snapshots=[makeSnapshot(st)];
+  return st;
+}
+function colorOf(p){if(!p)return null;return p===p.toUpperCase()?'w':'b'}
+function typeOf(p){return p?.toLowerCase()||null}
+function sqName(r,c){return FILES[c]+(8-r)}
+function inBoard(r,c){return r>=0&&r<8&&c>=0&&c<8}
+function parseSq(s){if(!s)return null;return {r:8-Number(s[1]),c:FILES.indexOf(s[0])}}
+function enemy(c){return c==='w'?'b':'w'}
+function findKing(st,c){for(let r=0;r<8;r++)for(let col=0;col<8;col++){if(st.board[r][col]=== (c==='w'?'K':'k'))return {r,c:col}}return null}
+function isAttacked(st,r,c,by){
+  const b=st.board;
+  const pawn=by==='w'?'P':'p';const pr=by==='w'?r+1:r-1;
+  for(const dc of [-1,1]) if(inBoard(pr,c+dc)&&b[pr][c+dc]===pawn) return true;
+  const kn=by==='w'?'N':'n';for(const [dr,dc] of [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]]) if(inBoard(r+dr,c+dc)&&b[r+dr][c+dc]===kn)return true;
+  const kg=by==='w'?'K':'k';for(const [dr,dc] of [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]]) if(inBoard(r+dr,c+dc)&&b[r+dr][c+dc]===kg)return true;
+  for(const [dr,dc] of [[-1,0],[1,0],[0,-1],[0,1]]){let rr=r+dr,cc=c+dc;while(inBoard(rr,cc)){const p=b[rr][cc];if(p){if(colorOf(p)===by&&(typeOf(p)==='r'||typeOf(p)==='q'))return true;break}rr+=dr;cc+=dc}}
+  for(const [dr,dc] of [[-1,-1],[-1,1],[1,-1],[1,1]]){let rr=r+dr,cc=c+dc;while(inBoard(rr,cc)){const p=b[rr][cc];if(p){if(colorOf(p)===by&&(typeOf(p)==='b'||typeOf(p)==='q'))return true;break}rr+=dr;cc+=dc}}
+  return false;
+}
+function inCheck(st,c){const k=findKing(st,c);return !k||isAttacked(st,k.r,k.c,enemy(c))}
+function pushMove(list,from,to,extra={}){list.push({from,to,...extra})}
+function canLandOn(p,c){return !p|| (colorOf(p)!==c && typeOf(p)!=='k')}
+function pseudoMoves(st,c){
+  const b=st.board,list=[];
+  for(let r=0;r<8;r++)for(let col=0;col<8;col++){
+    const p=b[r][col];if(!p||colorOf(p)!==c)continue;const t=typeOf(p);
+    if(t==='p'){
+      const d=c==='w'?-1:1,start=c==='w'?6:1,promRow=c==='w'?0:7;
+      if(inBoard(r+d,col)&&!b[r+d][col]){
+        if(r+d===promRow) for(const promo of ['q','r','b','n'])pushMove(list,[r,col],[r+d,col],{promotion:promo});else pushMove(list,[r,col],[r+d,col]);
+        if(r===start&&!b[r+2*d][col])pushMove(list,[r,col],[r+2*d,col]);
+      }
+      for(const dc of [-1,1]){
+        const rr=r+d,cc=col+dc;if(!inBoard(rr,cc))continue;const target=b[rr][cc];
+        if(target&&canLandOn(target,c)){if(rr===promRow)for(const promo of ['q','r','b','n'])pushMove(list,[r,col],[rr,cc],{promotion:promo});else pushMove(list,[r,col],[rr,cc])}
+        if(st.ep&&st.ep[0]===rr&&st.ep[1]===cc)pushMove(list,[r,col],[rr,cc],{enPassant:true});
+      }
+    } else if(t==='n'){
+      for(const [dr,dc] of [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]]){const rr=r+dr,cc=col+dc;if(!inBoard(rr,cc))continue;const q=b[rr][cc];if(canLandOn(q,c))pushMove(list,[r,col],[rr,cc]);}
+    } else if(t==='b'||t==='r'||t==='q'){
+      const dirs=t==='b'?[[-1,-1],[-1,1],[1,-1],[1,1]]:t==='r'?[[-1,0],[1,0],[0,-1],[0,1]]:[[-1,-1],[-1,1],[1,-1],[1,1],[-1,0],[1,0],[0,-1],[0,1]];
+      for(const [dr,dc] of dirs){let rr=r+dr,cc=col+dc;while(inBoard(rr,cc)){const q=b[rr][cc];if(!q)pushMove(list,[r,col],[rr,cc]);else{if(canLandOn(q,c))pushMove(list,[r,col],[rr,cc]);break}rr+=dr;cc+=dc}}
+    } else if(t==='k'){
+      for(const [dr,dc] of [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]]){const rr=r+dr,cc=col+dc;if(!inBoard(rr,cc))continue;const q=b[rr][cc];if(canLandOn(q,c))pushMove(list,[r,col],[rr,cc]);}
+      if(c==='w'&&r===7&&col===4){
+        if(st.castle.wK&&b[7][7]==='R'&&!b[7][5]&&!b[7][6]&&!isAttacked(st,7,4,'b')&&!isAttacked(st,7,5,'b')&&!isAttacked(st,7,6,'b'))pushMove(list,[7,4],[7,6],{castle:'K'});
+        if(st.castle.wQ&&b[7][0]==='R'&&!b[7][3]&&!b[7][2]&&!b[7][1]&&!isAttacked(st,7,4,'b')&&!isAttacked(st,7,3,'b')&&!isAttacked(st,7,2,'b'))pushMove(list,[7,4],[7,2],{castle:'Q'});
+      }
+      if(c==='b'&&r===0&&col===4){
+        if(st.castle.bK&&b[0][7]==='r'&&!b[0][5]&&!b[0][6]&&!isAttacked(st,0,4,'w')&&!isAttacked(st,0,5,'w')&&!isAttacked(st,0,6,'w'))pushMove(list,[0,4],[0,6],{castle:'K'});
+        if(st.castle.bQ&&b[0][0]==='r'&&!b[0][3]&&!b[0][2]&&!b[0][1]&&!isAttacked(st,0,4,'w')&&!isAttacked(st,0,3,'w')&&!isAttacked(st,0,2,'w'))pushMove(list,[0,4],[0,2],{castle:'Q'});
+      }
+    }
+  }
+  return list;
+}
+function applyMove(st,m){
+  const s=cloneState(st);s.snapshots=[];const b=s.board;const [fr,fc]=m.from,[tr,tc]=m.to;let p=b[fr][fc], captured=b[tr][tc];
+  b[fr][fc]=null;
+  if(m.enPassant){const cr=s.turn==='w'?tr+1:tr-1;captured=b[cr][tc];b[cr][tc]=null}
+  if(m.castle==='K'){b[tr][tc]=p;b[fr][7]=null;b[fr][5]=s.turn==='w'?'R':'r'}
+  else if(m.castle==='Q'){b[tr][tc]=p;b[fr][0]=null;b[fr][3]=s.turn==='w'?'R':'r'}
+  else {b[tr][tc]=m.promotion?(s.turn==='w'?m.promotion.toUpperCase():m.promotion):p}
+  if(typeOf(p)==='k'){if(s.turn==='w'){s.castle.wK=false;s.castle.wQ=false}else{s.castle.bK=false;s.castle.bQ=false}}
+  if(typeOf(p)==='r'){if(fr===7&&fc===0)s.castle.wQ=false;if(fr===7&&fc===7)s.castle.wK=false;if(fr===0&&fc===0)s.castle.bQ=false;if(fr===0&&fc===7)s.castle.bK=false}
+  if(captured&&typeOf(captured)==='r'){if(tr===7&&tc===0)s.castle.wQ=false;if(tr===7&&tc===7)s.castle.wK=false;if(tr===0&&tc===0)s.castle.bQ=false;if(tr===0&&tc===7)s.castle.bK=false}
+  s.ep=null;if(typeOf(p)==='p'&&Math.abs(tr-fr)===2)s.ep=[(tr+fr)/2,fc];
+  s.half=(typeOf(p)==='p'||captured)?0:s.half+1;if(s.turn==='b')s.full++;
+  s.turn=enemy(s.turn);s.last={from:m.from.slice(),to:m.to.slice()};return {state:s,captured,piece:p}
+}
+function legalMoves(st,c=st.turn){
+  const out=[];for(const m of pseudoMoves(st,c)){const a=applyMove(st,m).state;if(!inCheck(a,c))out.push(m)}return out;
+}
+function moveMatch(st,from,to,promotion){const f=Array.isArray(from)?from:[from.r,from.c],t=Array.isArray(to)?to:[to.r,to.c];return legalMoves(st).filter(m=>m.from[0]===f[0]&&m.from[1]===f[1]&&m.to[0]===t[0]&&m.to[1]===t[1]&&(!promotion||m.promotion===promotion))}
+function effectiveEp(st){
+  if(!st.ep)return null;
+  const [er,ec]=st.ep;const c=st.turn;const r=c==='w'?er+1:er-1;
+  if(!inBoard(r,ec))return null;
+  const pawn=c==='w'?'P':'p';
+  for(const dc of [-1,1]){const cc=ec+dc;if(inBoard(r,cc)&&st.board[r][cc]===pawn)return [er,ec]}
+  return null;
+}
+function positionKey(st){const ep=effectiveEp(st);return st.board.map(r=>r.map(p=>p||'.').join('')).join('/')+' '+st.turn+' '+Object.entries(st.castle).filter(([,v])=>v).map(([k])=>k).join('')+' '+(ep?ep.join(','):'-')}
+function insufficient(st){
+  const pieces=[];
+  for(let r=0;r<8;r++)for(let c=0;c<8;c++){
+    const p=st.board[r][c];
+    if(p&&typeOf(p)!=='k')pieces.push({c:colorOf(p),t:typeOf(p),r,c});
+  }
+  // Dead positions that are reliably recognizable from material alone.
+  if(!pieces.length)return true; // K vs K
+  if(pieces.some(x=>x.t==='p'||x.t==='q'||x.t==='r'))return false;
+  if(pieces.length===1)return pieces[0].t==='b'||pieces[0].t==='n'; // K+B/N vs K
+  // K+B vs K+B is dead only when both bishops are on the same square color.
+  if(pieces.length===2&&pieces.every(x=>x.t==='b')){
+    const colors=pieces.map(x=>(x.r+x.c)%2);
+    return colors[0]===colors[1];
+  }
+  return false;
+}
+function terminalOutcome(st,repetitionCount){
+  const lm=legalMoves(st,st.turn);
+  if(!lm.length){
+    if(inCheck(st,st.turn))return {result:st.turn==='w'?'blackWin':'whiteWin',reason:'체크메이트'};
+    return {result:'draw',reason:'스테일메이트'};
+  }
+  if(st.half>=100)return {result:'draw',reason:'50수 규칙'};
+  if(repetitionCount>=3)return {result:'draw',reason:'3회 동형반복'};
+  if(insufficient(st))return {result:'draw',reason:'기물 부족'};
+  return null;
+}
+function terminalStatus(st,repetitionCount){return terminalOutcome(st,repetitionCount)?.result||null}
+function sanFor(st,m){
+  const p=st.board[m.from[0]][m.from[1]],t=typeOf(p),cap=!!st.board[m.to[0]][m.to[1]]||m.enPassant;
+  if(m.castle)return m.castle==='K'?'O-O':'O-O-O';
+  let s=t==='p'?'':t.toUpperCase();
+  if(t==='p'&&cap)s+=FILES[m.from[1]];else if(t!=='p'){
+    const all=legalMoves(st);const amb=all.filter(x=>x.to[0]===m.to[0]&&x.to[1]===m.to[1]&&x.from[0]!==m.from[0]&&x.from[1]!==m.from[1]&&typeOf(st.board[x.from[0]][x.from[1]])===t);
+    const sameFile=amb.some(x=>x.from[1]===m.from[1]);const sameRank=amb.some(x=>x.from[0]===m.from[0]);if(amb.length){if(!sameFile)s+=FILES[m.from[1]];else if(!sameRank)s+=(8-m.from[0]);else s+=sqName(m.from[0],m.from[1])}
+  }
+  if(cap)s+='x';s+=sqName(m.to[0],m.to[1]);if(m.promotion)s+='='+m.promotion.toUpperCase();
+  const next=applyMove(st,m).state;const isMate=!legalMoves(next,next.turn).length&&inCheck(next,next.turn);const chk=inCheck(next,next.turn);if(isMate)s+='#';else if(chk)s+='+';return s;
+}
+function countCaptures(history){return history.filter(x=>x.capture).length}
+function makeGame(minutes,mode,playerColor='w',difficulty='normal'){
+  const st=newState(minutes);return {id:uid(),mode,playerColor,difficulty,minutes,state:st,rep:{[positionKey(st)]:1},startedAt:Date.now(),finished:false,result:null,reason:null,timer:null,aiTimer:null,arrows:[],marks:[],drawOffer:false,selected:null,flip:false,analysisMode:false,moveStartTime:{w:Date.now(),b:Date.now()}};
+}
+function currentMyColor(g){return g.mode==='bot'?g.playerColor:(g.mode==='local'?'both':g.mode==='online'?online.color:'w')}
+function gameResultLabel(r,g){if(r==='draw')return '무승부';if(r==='whiteWin')return '백 승리';if(r==='blackWin')return '흑 승리';return ''}
+function gameHost(g){return $(g.mode==='local'?'playGame':g.mode==='bot'?'botGame':'onlineGame')}
+function refreshClockUI(g){const host=gameHost(g);if(!host)return;const wc=qs('#whiteClock',host),bc=qs('#blackClock',host);if(wc)wc.textContent=formatClock(g.state.whiteTime);if(bc)bc.textContent=formatClock(g.state.blackTime);const ct=qs('#clockTop',host),cb=qs('#clockBottom',host);if(ct)ct.classList.toggle('active',g.state.turn==='w');if(cb)cb.classList.toggle('active',g.state.turn==='b');const status=qs('#gameStatus',host);if(status&&!g.finished)status.textContent=(g.state.turn==='w'?'백 차례':'흑 차례')+(inCheck(g.state,g.state.turn)?' · 체크':'')}
+function startTimer(g,renderFn){clearInterval(g.timer);g.lastTick=Date.now();if(typeof renderFn==='function')renderFn(g);g.timer=setInterval(()=>{if(g.finished)return;const now=Date.now();const key=g.state.turn==='w'?'whiteTime':'blackTime';const elapsed=(now-g.lastTick)/1000;g.lastTick=now;g.state[key]=Math.max(0,g.state[key]-elapsed);if(g.state[key]<=0){finishGame(g,g.state.turn==='w'?'blackWin':'whiteWin','시간 초과');}else refreshClockUI(g);},100)}
+function stopTimer(g){clearInterval(g.timer);clearTimeout(g.aiTimer)}
+function renderAllGame(g){if(g.mode==='online')renderGameIntoOnline(g);else renderGame(g)}
+function finishGame(g,result,reason='체크메이트',remote=false){if(g.finished)return;g.finished=true;g.result=result;g.reason=reason;stopTimer(g);if(!remote)saveFinishedGame(g);let endSound='draw';if(reason==='체크메이트')endSound='mate';else if(result==='draw')endSound='draw';else endSound=isPlayerWin(g,result)?'win':'lose';playSound(endSound);renderAllGame(g);if(g.mode==='online'&&!remote&&online.conn&&online.conn.open)online.conn.send({type:'gameover',result,reason,history:g.state.history,whiteTime:g.state.whiteTime,blackTime:g.state.blackTime});setTimeout(()=>showPage('analysis'),remote?150:350)}
+function isPlayerWin(g,res){if(g.mode==='bot')return (g.playerColor==='w'&&res==='whiteWin')||(g.playerColor==='b'&&res==='blackWin');if(g.mode==='online')return (online.color==='w'&&res==='whiteWin')||(online.color==='b'&&res==='blackWin');return true}
+function afterMove(g){
+  const st=g.state;
+  const key=positionKey(st);
+  g.rep[key]=(g.rep[key]||0)+1;
+  const outcome=terminalOutcome(st,g.rep[key]);
+  if(outcome){
+    finishGame(g,outcome.result,outcome.reason);
+    return;
+  }
+  playSound(inCheck(st,st.turn)?'check':g.state.history.at(-1)?.capture?'capture':'move');
+  if(g.mode==='bot'&&st.turn!==g.playerColor&&!g.finished)scheduleAI(g);
+}
+function executeMove(g,m,remote=false){if(g.finished)return false;const st=g.state;if(st.turn!==colorOf(st.board[m.from[0]][m.from[1]]))return false;const san=sanFor(st,m);const applied=applyMove(st,m);const next=applied.state;next.history=st.history.concat([{san,capture:!!applied.captured,capturedType:applied.captured?typeOf(applied.captured):null,from:m.from.slice(),to:m.to.slice(),promotion:m.promotion||null,whiteTime:next.whiteTime,blackTime:next.blackTime}]);next.snapshots=st.snapshots.concat([makeSnapshot(next)]);g.state=next;renderGame(g);if(g.mode==='online'&&!remote&&online.host){onlineSendState(g)}if(g.mode==='online'&&!remote&&!online.host){if(online.conn?.open)online.conn.send({type:'moveRequest',move:m,san});}afterMove(g);return true}
+function scheduleAI(g){
+  clearTimeout(g.aiTimer);
+  const key=BOT_COMPAT[g.difficulty]||g.difficulty||'level3';
+  const cfg=BOT_LEVELS[key]||BOT_LEVELS.level3;
+  g.aiTimer=setTimeout(()=>{
+    if(g.finished||g.state.turn===g.playerColor)return;
+    const m=chooseAIMove(g.state,key);
+    if(m)executeMove(g,m);
+  },cfg.delay);
+}
+const PST={
+  p:[0,5,5,10,12,14,18,0],
+  n:[-10,-4,1,4,6,4,-4,-10],
+  b:[-5,0,4,7,7,4,0,-5],
+  r:[0,1,2,3,3,2,1,0],
+  q:[-2,0,2,3,3,2,0,-2],
+  k:[-12,-8,-4,0,2,-4,-8,-12]
+};
+function positionalBonus(p,r,c){
+  const t=typeOf(p),color=colorOf(p),rr=color==='w'?7-r:r;
+  const table=PST[t]||[];let b=table[rr]||0;
+  const center=(3.5-Math.abs(3.5-c))+(3.5-Math.abs(3.5-r));
+  if(t==='n'||t==='b'||t==='q')b+=center*4;
+  if(t==='p')b+=color==='w'?(6-r)*2:r*2;
+  if(t==='r')b+=(c===3||c===4?2:0);
+  return b;
+}
+function evaluate(st,side){
+  let score=0;
+  let nonKing=0;
+  for(let r=0;r<8;r++)for(let c=0;c<8;c++){
+    const p=st.board[r][c];if(!p)continue;
+    const sign=colorOf(p)===side?1:-1;
+    const v=PIECE_VALUE[typeOf(p)]||0;
+    if(typeOf(p)!=='k')nonKing+=v;
+    score+=sign*(v+positionalBonus(p,r,c));
+  }
+  // Light king-safety / endgame pressure.
+  for(const kc of ['w','b']){
+    const k=findKing(st,kc);if(!k)continue;
+    const dist=Math.abs(k.r-3.5)+Math.abs(k.c-3.5);
+    const shield=(kc==='w'?(k.r>=6):(k.r<=1))?8:0;
+    const val=(nonKing<2600?Math.max(0,7-dist)*3:shield);
+    score+=(kc===side?val:-val);
+  }
+  return score;
+}
+function moveScore(st,m){
+  const p=st.board[m.from[0]][m.from[1]],cap=st.board[m.to[0]][m.to[1]];
+  let score=(cap?PIECE_VALUE[typeOf(cap)]-PIECE_VALUE[typeOf(p)]*.04:0)+(m.promotion?700:0)+(typeOf(p)==='k'&&m.castle?20:0);
+  if(typeOf(p)==='n'||typeOf(p)==='b'||typeOf(p)==='q'){
+    const c=(3.5-Math.abs(3.5-m.to[1]))+(3.5-Math.abs(3.5-m.to[0]));score+=c*2;
+  }
+  return score;
+}
+function negamaxTimed(st,depth,alpha,beta,side,ctx){
+  if(performance.now()>ctx.deadline){ctx.aborted=true;return evaluate(st,side)}
+  const moves=legalMoves(st,side);const term=terminalStatus(st,0);
+  if(depth===0||term){
+    if(term==='draw')return 0;
+    if(term==='whiteWin'||term==='blackWin')return term===(side==='w'?'whiteWin':'blackWin')?999999:-999999;
+    return evaluate(st,side);
+  }
+  moves.sort((a,b)=>moveScore(st,b)-moveScore(st,a));
+  let best=-Infinity;
+  for(const m of moves){
+    const ns=applyMove(st,m).state;
+    const val=-negamaxTimed(ns,depth-1,-beta,-alpha,enemy(side),ctx);
+    if(ctx.aborted)return best===-Infinity?val:best;
+    if(val>best)best=val;if(val>alpha)alpha=val;if(alpha>=beta)break;
+  }
+  return best;
+}
+function chooseAIMove(st,diff){
+  const key=BOT_COMPAT[diff]||diff||'level3';
+  const cfg=BOT_LEVELS[key]||BOT_LEVELS.level3;
+  const moves=legalMoves(st);if(!moves.length)return null;
+  const shuffled=moves.slice().sort(()=>Math.random()-.5);
+  // Very low levels occasionally choose among sensible candidates instead of always selecting the same first move.
+  if(cfg.random>0&&Math.random()<cfg.random){
+    shuffled.sort((a,b)=>moveScore(st,b)-moveScore(st,a));
+    return shuffled[Math.floor(Math.random()*Math.min(5,shuffled.length))];
+  }
+  let bestMove=moves[0],bestValue=-Infinity;
+  const deadline=performance.now()+cfg.budget;
+  let completedDepth=0;
+  for(let depth=1;depth<=cfg.depth;depth++){
+    if(performance.now()>=deadline)break;
+    let localBest=null,localValue=-Infinity,aborted=false;
+    const ctx={deadline,aborted:false};
+    const ordered=(depth===1?moves.slice():moves.slice().sort((a,b)=>moveScore(st,b)-moveScore(st,a)));
+    for(const m of ordered){
+      const ns=applyMove(st,m).state;
+      const v=-negamaxTimed(ns,depth-1,-Infinity,Infinity,enemy(st.turn),ctx);
+      if(ctx.aborted){aborted=true;break;}
+      if(v>localValue){localValue=v;localBest=m;}
+    }
+    if(aborted||!localBest)break;
+    bestMove=localBest;bestValue=localValue;completedDepth=depth;
+    if(Math.abs(bestValue)>=900000)break;
+  }
+  return bestMove||moves[0];
+}
+function ensureAudio(){
+  try{audioCtx??=new (window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==='suspended')audioCtx.resume();return audioCtx}catch{return null}
+}
+function envelopeTone(freq,dur,type='sine',gain=.12,delay=0,detune=0){
+  const ctx=ensureAudio();if(!ctx)return;
+  const now=ctx.currentTime+delay;
+  const osc=ctx.createOscillator(),g=ctx.createGain();
+  osc.type=type;osc.frequency.setValueAtTime(freq,now);osc.detune.value=detune;
+  g.gain.setValueAtTime(.0001,now);
+  g.gain.exponentialRampToValueAtTime(Math.max(.006,settings.volume*gain),now+.006);
+  g.gain.exponentialRampToValueAtTime(.0001,now+dur);
+  osc.connect(g);g.connect(ctx.destination);osc.start(now);osc.stop(now+dur+.025);
+}
+function woodenTap(strength=1){
+  const ctx=ensureAudio();if(!ctx)return;
+  const now=ctx.currentTime;
+  // Short filtered noise gives a dry wooden "탁" texture without external audio files.
+  const buffer=ctx.createBuffer(1,Math.floor(ctx.sampleRate*.075),ctx.sampleRate),data=buffer.getChannelData(0);
+  for(let i=0;i<data.length;i++){
+    const env=Math.pow(1-i/data.length,2.2);data[i]=(Math.random()*2-1)*env;
+  }
+  const src=ctx.createBufferSource(),bp=ctx.createBiquadFilter(),g=ctx.createGain();
+  bp.type='bandpass';bp.frequency.value=1350;bp.Q.value=.75;
+  g.gain.setValueAtTime(.0001,now);g.gain.exponentialRampToValueAtTime(Math.max(.01,settings.volume*.18*strength),now+.004);g.gain.exponentialRampToValueAtTime(.0001,now+.075);
+  src.buffer=buffer;src.connect(bp);bp.connect(g);g.connect(ctx.destination);src.start(now);src.stop(now+.08);
+  envelopeTone(170,.085,'triangle',.16*strength,0);
+}
+function captureImpact(){
+  woodenTap(1.55);
+  envelopeTone(105,.16,'sine',.30,.008);
+  envelopeTone(235,.10,'triangle',.22,.012);
+  envelopeTone(520,.045,'square',.08,.025);
+}
+function playSound(kind){
+  if(!settings.sound)return;
+  try{
+    if(kind==='move'){woodenTap(.82);return;}
+    if(kind==='capture'){captureImpact();return;}
+    if(kind==='check'){envelopeTone(620,.095,'sine',.18);envelopeTone(900,.13,'sine',.14,.06);return;}
+    if(kind==='mate'){envelopeTone(250,.24,'triangle',.25);envelopeTone(165,.36,'sine',.24,.08);envelopeTone(110,.42,'sine',.18,.16);return;}
+    if(kind==='draw'){envelopeTone(360,.18,'sine',.18);envelopeTone(300,.23,'sine',.15,.11);return;}
+    if(kind==='win'){envelopeTone(540,.17,'sine',.22);envelopeTone(720,.19,'sine',.20,.08);envelopeTone(960,.23,'sine',.18,.17);return;}
+    if(kind==='lose'){envelopeTone(280,.18,'sine',.20);envelopeTone(190,.25,'sine',.18,.10);return;}
+    envelopeTone(520,.05,'sine',.10);
+  }catch{}
+}
+
+function renderBoard(el,state,opts={}){
+  if(!el)return;el.innerHTML='';const flip=!!opts.flip;const coords=opts.coords??settings.coords;const selected=opts.selected||null;const legal=opts.legal||[];const last=opts.last??state.last;const arrows=opts.arrows||[];const marks=opts.marks||[];
+  for(let vr=0;vr<8;vr++)for(let vc=0;vc<8;vc++){
+    const r=flip?7-vr:vr,c=flip?7-vc:vc;const div=document.createElement('div');div.className='square '+((r+c)%2===0?'light':'dark');div.dataset.r=r;div.dataset.c=c;
+    if(last&&((last.from[0]===r&&last.from[1]===c)||(last.to[0]===r&&last.to[1]===c)))div.classList.add('last');
+    if(selected&&selected[0]===r&&selected[1]===c)div.classList.add('selected');
+    if(marks.some(x=>x[0]===r&&x[1]===c))div.classList.add('marked');
+    if(legal.some(x=>x[0]===r&&x[1]===c)){if(state.board[r][c]){const ring=document.createElement('span');ring.className='captureRing';div.appendChild(ring)}else{const dot=document.createElement('span');dot.className='legalDot';div.appendChild(dot)}}
+    if(inCheck(state,state.turn)){const k=findKing(state,state.turn);if(k&&k.r===r&&k.c===c)div.classList.add('check')}
+    const p=state.board[r][c];if(p){const span=document.createElement('span');span.className='piece '+(colorOf(p)==='w'?'white':'black');span.textContent=GLYPH[colorOf(p)][typeOf(p)];div.appendChild(span)}
+    if(coords){if(vr===7){const q=document.createElement('span');q.className='coord file';q.textContent=FILES[c];div.appendChild(q)}if(vc===0){const q=document.createElement('span');q.className='coord rank';q.textContent=8-r;div.appendChild(q)}}
+    el.appendChild(div);
+  }
+  drawArrows(opts.svg,arrows,flip);
+}
+function svgPointForSq(r,c,flip){return {x:((flip?7-c:c)+.5)*12.5,y:((flip?7-r:r)+.5)*12.5}}
+function arrowKind(from,to){
+  const dr=Math.abs(to[0]-from[0]),dc=Math.abs(to[1]-from[1]);
+  if(dr===0&&dc===0)return 'point';
+  if((dr===2&&dc===1)||(dr===1&&dc===2))return 'knight';
+  if(dr===0)return 'horizontal';
+  if(dc===0)return 'vertical';
+  if(dr===dc)return 'diagonal';
+  return 'angle';
+}
+function arrowPoints(a,flip){
+  const s=svgPointForSq(a.from[0],a.from[1],flip),e=svgPointForSq(a.to[0],a.to[1],flip);
+  if(a.kind==='knight'){
+    const horizontalFirst=Math.abs(e.x-s.x)>=Math.abs(e.y-s.y);
+    const elbow=horizontalFirst?{x:e.x,y:s.y}:{x:s.x,y:e.y};
+    return {s,e,points:[s,elbow,e]};
+  }
+  return {s,e,points:[s,e]};
+}
+function drawArrows(svg,arr,flip,preview=null){
+  if(!svg)return;
+  svg.innerHTML='';
+  svg.setAttribute('viewBox','0 0 100 100');
+  svg.setAttribute('preserveAspectRatio','none');
+
+  const defs=document.createElementNS('http://www.w3.org/2000/svg','defs');
+  const filter=document.createElementNS('http://www.w3.org/2000/svg','filter');
+  filter.setAttribute('id','arrowSoftShadow');
+  filter.setAttribute('x','-30%');filter.setAttribute('y','-30%');filter.setAttribute('width','160%');filter.setAttribute('height','160%');
+  const ds=document.createElementNS('http://www.w3.org/2000/svg','feDropShadow');
+  ds.setAttribute('dx','0');ds.setAttribute('dy','0.6');ds.setAttribute('stdDeviation','0.65');ds.setAttribute('flood-color','#000');ds.setAttribute('flood-opacity','0.34');
+  filter.appendChild(ds);defs.appendChild(filter);svg.appendChild(defs);
+
+  const all=arr.slice();
+  if(preview)all.push({...preview,preview:true});
+
+  for(const a of all){
+    if(!a?.from||!a?.to||a.from[0]===a.to[0]&&a.from[1]===a.to[1])continue;
+    const geo=arrowPoints(a,flip),pts=geo.points;
+    const last=pts[pts.length-1],prev=pts[pts.length-2];
+    const dx=last.x-prev.x,dy=last.y-prev.y;
+    const len=Math.hypot(dx,dy)||1;
+    const ux=dx/len,uy=dy/len;
+    const firstSeg=pts[1]||geo.e;
+    const sdx=firstSeg.x-geo.s.x,sdy=firstSeg.y-geo.s.y;
+    const slen=Math.hypot(sdx,sdy)||1;
+    const startGap=a.kind==='knight'?0.9:0.8;
+    const endGap=4.05;
+    const first={x:geo.s.x+(sdx/slen)*startGap,y:geo.s.y+(sdy/slen)*startGap};
+    const end={x:geo.e.x-ux*endGap,y:geo.e.y-uy*endGap};
+    const drawPts=pts.slice();
+    drawPts[0]=first;drawPts[drawPts.length-1]=end;
+    const pointString=drawPts.map(q=>`${q.x},${q.y}`).join(' ');
+    const color=a.color||'#e9b933';
+
+    const glow=document.createElementNS('http://www.w3.org/2000/svg','polyline');
+    glow.setAttribute('points',pointString);
+    glow.setAttribute('class','arrowGlow');
+    glow.setAttribute('stroke',color);
+    svg.appendChild(glow);
+
+    const line=document.createElementNS('http://www.w3.org/2000/svg','polyline');
+    line.setAttribute('points',pointString);
+    line.setAttribute('class','arrowPath'+(a.kind==='knight'?' arrowKnight':'')+(a.preview?' arrowPreview':''));
+    line.setAttribute('stroke',color);
+    line.setAttribute('filter','url(#arrowSoftShadow)');
+    svg.appendChild(line);
+
+    const perpX=-uy,perpY=ux;
+    const headLen=a.kind==='knight'?4.4:4.8;
+    const headHalf=a.kind==='knight'?1.5:1.65;
+    const baseX=geo.e.x-ux*headLen,baseY=geo.e.y-uy*headLen;
+    const leftX=baseX+perpX*headHalf,leftY=baseY+perpY*headHalf;
+    const rightX=baseX-perpX*headHalf,rightY=baseY-perpY*headHalf;
+    const polygon=document.createElementNS('http://www.w3.org/2000/svg','polygon');
+    polygon.setAttribute('points',`${geo.e.x},${geo.e.y} ${leftX},${leftY} ${rightX},${rightY}`);
+    polygon.setAttribute('class','arrowHead');
+    polygon.setAttribute('fill',color);
+    svg.appendChild(polygon);
+  }
+}
+function setupBoardInteractions(boardEl,svgEl,getGame,opts={}){
+  let dragFrom=null,dragging=false,startX=0,startY=0,arrowFrom=null,dragGhost=null,dragPiece=null,lastTrailAt=0,suppressClick=false;
+  const colorForEvent=e=>e.ctrlKey?'#f15d5d':e.altKey?'#69a9ff':e.shiftKey?'#69d98f':'#e7b72f';
+  function point(e){const rect=boardEl.getBoundingClientRect();if(!rect.width||!rect.height)return {r:0,c:0};let x=(e.clientX-rect.left)/rect.width,y=(e.clientY-rect.top)/rect.height;x=Math.max(0,Math.min(.999999,x));y=Math.max(0,Math.min(.999999,y));if(opts.flip){x=1-x;y=1-y}return {r:Math.max(0,Math.min(7,Math.floor(y*8))),c:Math.max(0,Math.min(7,Math.floor(x*8)))};}
+  function squareFromEvent(e){const sq=e.target?.closest?.('.square');if(sq&&boardEl.contains(sq))return {r:Number(sq.dataset.r),c:Number(sq.dataset.c)};return point(e)}
+  function visualPoint(e){const rect=boardEl.getBoundingClientRect();return {x:Math.max(0,Math.min(100,((e.clientX-rect.left)/rect.width)*100)),y:Math.max(0,Math.min(100,((e.clientY-rect.top)/rect.height)*100))};}
+  function controlledByPlayer(g,p){if(!g||!p||g.finished)return false;if(g.mode==='local')return g.state.turn===colorOf(p);const my=g.mode==='online'?online.color:g.playerColor;return colorOf(p)===my&&g.state.turn===my;}
+  function openPromotionPicker(g,candidates,done){if(!candidates.length)return;const overlay=document.createElement('div');overlay.className='promotionOverlay';const color=g.state.turn;const labels={q:'퀸',r:'룩',b:'비숍',n:'나이트'};overlay.innerHTML=`<div class="promotionModal"><h3 style="margin:0 0 4px">프로모션 기물 선택</h3><div class="muted" style="font-size:13px">폰이 마지막 줄에 도착했습니다.</div><div class="promotionChoices">${['q','r','b','n'].map(t=>{const m=candidates.find(x=>x.promotion===t);return m?`<button class="promoBtn" data-promo="${t}" title="${labels[t]}">${GLYPH[color][t]}</button>`:''}).join('')}</div></div>`;document.body.appendChild(overlay);const close=()=>overlay.remove();qsa('[data-promo]',overlay).forEach(btn=>btn.onclick=()=>{const m=candidates.find(x=>x.promotion===btn.dataset.promo)||candidates[0];close();done(m)});}
+  function clearBoardMarks(g){if(!g)return false;const had=(g.arrows?.length||0)+(g.marks?.length||0)>0;if(had){g.arrows=[];g.marks=[];renderGame(g);}return had;}
+  function cleanupDragVisual(){dragGhost?.remove();dragGhost=null;boardEl.classList.remove('is-dragging');qsa('.drag-source',boardEl).forEach(x=>x.classList.remove('drag-source'));qsa('.dragTrail',boardEl).forEach(x=>x.remove());}
+  function positionGhost(e){if(dragGhost){const pos=visualPoint(e);dragGhost.style.left=pos.x+'%';dragGhost.style.top=pos.y+'%';}}
+  function addTrail(e,piece){if(!piece)return;const now=performance.now();if(now-lastTrailAt<28)return;lastTrailAt=now;const t=document.createElement('span');t.className='dragTrail '+(colorOf(piece)==='w'?'white':'black');t.textContent=GLYPH[colorOf(piece)][typeOf(piece)];const pos=visualPoint(e);t.style.left=pos.x+'%';t.style.top=pos.y+'%';boardEl.appendChild(t);setTimeout(()=>t.remove(),460);}
+  boardEl.oncontextmenu=e=>e.preventDefault();boardEl.ondragstart=e=>e.preventDefault();
+  boardEl.onpointerdown=e=>{
+    const g=getGame();
+    if(e.button===2){e.preventDefault();arrowFrom=squareFromEvent(e);try{boardEl.setPointerCapture(e.pointerId)}catch{};return;}
+    if(e.button!==0||!g||g.finished)return;e.preventDefault();const p=squareFromEvent(e);const sourcePiece=g.state.board[p.r]?.[p.c]||null;dragFrom=p;startX=e.clientX;startY=e.clientY;dragging=false;suppressClick=false;lastTrailAt=0;dragPiece=controlledByPlayer(g,sourcePiece)?sourcePiece:null;
+    if(dragPiece){const src=boardEl.querySelector(`.square[data-r="${p.r}"][data-c="${p.c}"]`);src?.classList.add('drag-source');dragGhost=document.createElement('span');dragGhost.className='dragGhost '+(colorOf(dragPiece)==='w'?'white':'black');dragGhost.textContent=GLYPH[colorOf(dragPiece)][typeOf(dragPiece)];boardEl.appendChild(dragGhost);positionGhost(e);}try{boardEl.setPointerCapture(e.pointerId)}catch{}
+  };
+  boardEl.onpointermove=e=>{
+    const g=getGame();
+    if(arrowFrom){const p=squareFromEvent(e);if(svgEl)drawArrows(svgEl,g?.arrows||[],!!opts.flip,{from:[arrowFrom.r,arrowFrom.c],to:[p.r,p.c],color:colorForEvent(e),kind:arrowKind([arrowFrom.r,arrowFrom.c],[p.r,p.c])});return;}
+    if(!dragFrom||!dragPiece)return;if(!controlledByPlayer(g,dragPiece))return;if(!dragging&&Math.hypot(e.clientX-startX,e.clientY-startY)>5){dragging=true;suppressClick=true;boardEl.classList.add('is-dragging');}if(dragging){positionGhost(e);addTrail(e,dragPiece);}
+  };
+  boardEl.onpointerup=e=>{
+    const g=getGame(),p=squareFromEvent(e);try{boardEl.releasePointerCapture(e.pointerId)}catch{}
+    if(arrowFrom){if(g){g.arrows??=[];g.marks??=[];if(arrowFrom.r===p.r&&arrowFrom.c===p.c){const mi=g.marks.findIndex(x=>x[0]===p.r&&x[1]===p.c);if(mi>=0)g.marks.splice(mi,1);else g.marks.push([p.r,p.c]);}else{const from=[arrowFrom.r,arrowFrom.c],to=[p.r,p.c],key=`${from[0]},${from[1]}-${to[0]},${to[1]}`,idx=g.arrows.findIndex(a=>`${a.from[0]},${a.from[1]}-${a.to[0]},${a.to[1]}`===key);if(idx>=0)g.arrows.splice(idx,1);else g.arrows.push({from,to,color:colorForEvent(e),kind:arrowKind(from,to)});}renderGame(g);}arrowFrom=null;return;}
+    if(e.button!==0){cleanupDragVisual();dragFrom=null;dragPiece=null;dragging=false;return;}
+    if(dragging&&g&&!g.finished&&dragPiece&&controlledByPlayer(g,dragPiece)){const candidates=moveMatch(g.state,dragFrom,p);if(candidates.length){g.selected=null;cleanupDragVisual();dragFrom=null;dragPiece=null;dragging=false;if(candidates.some(x=>x.promotion))openPromotionPicker(g,candidates,m=>executeMove(g,m));else executeMove(g,candidates[0]);return;}g.selected=[dragFrom.r,dragFrom.c];cleanupDragVisual();dragFrom=null;dragPiece=null;dragging=false;renderGame(g);return;}
+    cleanupDragVisual();dragFrom=null;dragPiece=null;dragging=false;
+  };
+  boardEl.onpointercancel=e=>{try{boardEl.releasePointerCapture(e.pointerId)}catch{};cleanupDragVisual();dragFrom=null;dragPiece=null;dragging=false;arrowFrom=null;if(svgEl){const g=getGame();drawArrows(svgEl,g?.arrows||[],!!opts.flip)}};
+  boardEl.onclick=e=>{if(e.button!==0)return;if(suppressClick){suppressClick=false;return;}const g=getGame();if(!g||g.finished)return;clearBoardMarks(g);const p=squareFromEvent(e),targetPiece=g.state.board[p.r]?.[p.c]||null;if(g.mode!=='local'){const my=g.mode==='online'?online.color:g.playerColor;if(g.state.turn!==my){toast('상대방 차례입니다.');g.selected=null;renderGame(g);return;}}if(g.selected){const candidates=moveMatch(g.state,g.selected,p);if(candidates.length){g.selected=null;if(candidates.some(x=>x.promotion))openPromotionPicker(g,candidates,m=>executeMove(g,m));else executeMove(g,candidates[0]);return;}if(targetPiece&&controlledByPlayer(g,targetPiece))g.selected=[p.r,p.c];else g.selected=null;}else if(controlledByPlayer(g,targetPiece)){g.selected=[p.r,p.c];}else if(targetPiece){toast('자신의 차례에 자신의 기물을 선택하세요.');}renderGame(g);};
+  if(!window.__chessNovaEscBound){window.__chessNovaEscBound=true;window.addEventListener('keydown',e=>{if(e.key!=='Escape')return;const g=activeGame;if(g){g.arrows=[];g.marks=[];g.selected=null;}const b=document.querySelector('.board');if(b){qsa('.drag-source',b).forEach(x=>x.classList.remove('drag-source'));qsa('.dragGhost',b).forEach(x=>x.remove());qsa('.dragTrail',b).forEach(x=>x.remove());const svg=b.parentElement?.querySelector?.('.arrows');if(svg)drawArrows(svg,g?.arrows||[],false);}if(g)renderGame(g);});}
+}
+function showDecisionModal(title,body,okText='확인',cancelText='취소',toneClass='primary'){
+  return new Promise(resolve=>{
+    const overlay=document.createElement('div');overlay.className='modalOverlay';
+    overlay.innerHTML=`<div class="decisionModal"><h3>${esc(title)}</h3><p>${esc(body)}</p><div class="decisionActions"><button class="btn" data-no>${esc(cancelText)}</button><button class="btn ${toneClass}" data-yes>${esc(okText)}</button></div></div>`;
+    document.body.appendChild(overlay);
+    const close=v=>{overlay.remove();resolve(v)};
+    overlay.querySelector('[data-no]').onclick=()=>close(false);
+    overlay.querySelector('[data-yes]').onclick=()=>close(true);
+    overlay.addEventListener('click',e=>{if(e.target===overlay)close(false)});
+  });
+}
+function showDrawOfferModal(g){
+  if(!g||g.finished||g.drawDecisionOpen)return;
+  g.drawDecisionOpen=true;renderAllGame(g);
+  showDecisionModal('무승부 제안','상대방이 무승부를 제안했습니다. 무승부로 경기를 끝내겠습니까?','수락','거절').then(ok=>{
+    g.drawDecisionOpen=false;
+    if(g.finished)return;
+    if(online.conn?.open)online.conn.send({type:ok?'drawAccept':'drawDecline'});
+    if(ok){g.drawOffer=false;finishGame(g,'draw','무승부 합의');}
+    else {g.drawOffer=false;renderAllGame(g);toast('무승부 제안을 거절했습니다.');}
+  });
+}
+function showMovePreview(g,index){
+  if(!g?.state?.snapshots?.[index])return;
+  const overlay=document.createElement('div');overlay.className='modalOverlay';
+  const snap=g.state.snapshots[index];
+  const temp={board:cloneBoard(snap.board),turn:snap.turn,castle:{wK:false,wQ:false,bK:false,bQ:false,...(snap.castle||{})},ep:snap.ep,half:snap.half,full:snap.full,whiteTime:snap.whiteTime,blackTime:snap.blackTime,last:snap.last};
+  overlay.innerHTML=`<div class="previewModal"><div class="statusRow"><div><div style="font-weight:900;font-size:18px">수순 보기</div><div class="muted">${index===0?'게임 시작':`${index}수째 · ${esc(g.state.history[index-1]?.san||'')}`}</div></div><button class="btn" data-close>닫기</button></div><div style="height:12px"></div><div class="previewLayout"><div class="boardWrap"><div class="previewBoardShell"><div class="boardArea"><div class="board" data-preview-board></div><svg class="arrows" data-preview-arrows></svg></div></div></div><div class="previewInfo"><div class="card"><div class="metric"><small>현재 차례</small><strong>${temp.turn==='w'?'백':'흑'}</strong></div><div style="height:8px"></div><div class="metric"><small>수순</small><strong class="previewMove">${index===0?'시작':esc(g.state.history[index-1]?.san||'')}</strong></div></div><div class="previewNav"><button class="btn" data-first>처음</button><button class="btn" data-prev>이전</button><button class="btn" data-next>다음</button><button class="btn" data-last>마지막</button></div></div></div></div>`;
+  document.body.appendChild(overlay);
+  const board=overlay.querySelector('[data-preview-board]');
+  renderBoard(board,temp,{coords:true,last:temp.last});
+  overlay.querySelector('[data-close]').onclick=()=>overlay.remove();
+  overlay.addEventListener('click',e=>{if(e.target===overlay)overlay.remove()});
+  const go=i=>{overlay.remove();showMovePreview(g,Math.max(0,Math.min(g.state.snapshots.length-1,i)))};
+  overlay.querySelector('[data-first]').onclick=()=>go(0);overlay.querySelector('[data-prev]').onclick=()=>go(index-1);overlay.querySelector('[data-next]').onclick=()=>go(index+1);overlay.querySelector('[data-last]').onclick=()=>go(g.state.snapshots.length-1);
+}
+function renderMoves(g,container){
+  let html='';
+  for(let i=0;i<g.state.history.length;i+=2){
+    const w=g.state.history[i],b=g.state.history[i+1];
+    html+=`<div class="moveRow"><span class="moveNo">${i/2+1}.</span><span class="moveCell" data-move="${i}">${esc(w?.san||'')}</span><span class="moveCell" data-move="${i+1}">${esc(b?.san||'')}</span></div>`;
+  }
+  container.innerHTML=html||'<div class="empty">아직 수가 없습니다.</div>';
+  qsa('[data-move]',container).forEach(el=>el.onclick=()=>showMovePreview(g,Number(el.dataset.move)+1));
+  if(g.state.history.length)container.scrollTop=container.scrollHeight;
+}
+
+function gameViewHTML(g){return `<div class="gameLayout"><div class="boardWrap"><div class="boardShell"><div class="clock ${g.state.turn==='w'?'active':''}" id="clockTop"><span class="who">${g.mode==='bot'?(g.playerColor==='b'?'봇 (백)':'당신 (백)'):(g.mode==='online'?'백':'백')}</span><span class="time" id="whiteClock"></span></div><div style="height:7px"></div><div class="boardArea"><div class="board" id="gameBoard"></div><svg class="arrows" id="gameArrows"></svg></div><div style="height:7px"></div><div class="clock ${g.state.turn==='b'?'active':''}" id="clockBottom"><span class="who">${g.mode==='bot'?(g.playerColor==='w'?'봇 (흑)':'당신 (흑)'):(g.mode==='online'?'흑':'흑')}</span><span class="time" id="blackClock"></span></div></div></div><div class="sidePanel"><div class="card"><div class="statusRow"><div class="status" id="gameStatus"></div><span class="onlineBadge" style="${g.mode==='online'?'':'display:none'}"><span class="onlineDot"></span>온라인</span></div><div id="drawOfferBanner"></div><div style="height:10px"></div><div class="actions"><button class="btn" id="flipBoard">보드 뒤집기</button><button class="btn" id="fullscreenBoard">전체화면</button><button class="btn" id="takebackBtn">무르기</button><button class="btn danger" id="resignBtn">기권</button><button class="btn" id="drawBtn">무승부</button><button class="btn" id="rematchBtn">${g.mode==='online'?'재대결':'다시 시작'}</button><button class="btn" id="backSetup">설정으로</button></div></div><div class="card"><h3>잡은 기물</h3><div class="muted" style="font-size:12px;margin-bottom:6px">백이 잡은 기물</div><div class="captureTray" id="whiteCaptured"></div><div class="muted" style="font-size:12px;margin:9px 0 6px">흑이 잡은 기물</div><div class="captureTray" id="blackCaptured"></div></div><div class="card"><h3>수순</h3><div class="moves" id="gameMoves"></div></div><div class="card"><h3>힌트</h3><div class="muted" style="font-size:13px">우클릭 드래그: 화살표 · 우클릭 클릭: 칸 표시 · 좌클릭 한 번: 화살표/표시 삭제 · ESC: 모두 삭제</div></div></div></div>`}
+function renderGame(g){
+  const host=gameHost(g);if(!host)return;
+  host.innerHTML=gameViewHTML(g);
+  const board=qs('.board',host),svg=qs('.arrows',host);
+  const flip=!!g.flip;
+  const selected=g.selected||null;
+  const lm=selected?legalMoves(g.state).filter(m=>m.from[0]===selected[0]&&m.from[1]===selected[1]).map(m=>m.to):[];
+  renderBoard(board,g.state,{flip,selected,legal:settings.legal?lm:[],last:settings.last?g.state.last:null,arrows:g.arrows,marks:g.marks,svg});
+  renderMoves(g,qs('#gameMoves',host));
+  qs('#whiteClock',host).textContent=formatClock(g.state.whiteTime);
+  qs('#blackClock',host).textContent=formatClock(g.state.blackTime);
+  qs('#clockTop',host)?.classList.toggle('active',g.state.turn==='w');
+  qs('#clockBottom',host)?.classList.toggle('active',g.state.turn==='b');
+  const status=qs('#gameStatus',host);
+  if(status)status.textContent=g.finished?`${gameResultLabel(g.result,g)} · ${g.reason}`:(g.state.turn==='w'?'백 차례':'흑 차례')+(inCheck(g.state,g.state.turn)?' · 체크':'');
+  const offerBanner=qs('#drawOfferBanner',host);
+  if(offerBanner){
+    offerBanner.innerHTML=g.drawOffer&&!g.drawDecisionOpen?'<div class="drawOfferBanner"><span><strong>무승부 제안</strong><br><span class="muted" style="font-size:12px">상대방에게 무승부 제안을 보냈습니다.</span></span></div>':'';
+  }
+  setupBoardInteractions(board,svg,()=>g,{flip});
+  const wcap=qs('#whiteCaptured',host),bcap=qs('#blackCaptured',host);if(wcap)wcap.textContent=capturedHTML(g,'w');if(bcap)bcap.textContent=capturedHTML(g,'b');
+  const takeBtn=qs('#takebackBtn',host);if(takeBtn){takeBtn.disabled=!canTakeback(g);takeBtn.title=g.mode==='online'?'온라인 대국에서는 무르기를 사용할 수 없습니다.':'이전 수로 되돌립니다.';takeBtn.onclick=()=>{if(!canTakeback(g))return;showDecisionModal('무르기','마지막 수를 취소하고 이전 위치로 돌아갈까요?','무르기','취소').then(ok=>{if(ok)takebackGame(g)})}}
+  const fullBtn=qs('#fullscreenBoard',host);if(fullBtn)fullBtn.onclick=async()=>{const shell=board.closest('.boardShell');try{if(!document.fullscreenElement)await shell.requestFullscreen();else await document.exitFullscreen()}catch{toast('전체화면을 사용할 수 없습니다.')}};
+  const resign=qs('#resignBtn',host);
+  if(resign){resign.disabled=!!g.finished;resign.onclick=()=>{if(g.finished)return;showDecisionModal('기권 확인','정말 이 경기를 기권하시겠습니까?','기권','취소','danger').then(ok=>{if(ok&&!g.finished)finishGame(g,g.state.turn==='w'?'blackWin':'whiteWin','기권')})}}
+  const drawBtn=qs('#drawBtn',host);
+  if(drawBtn){
+    drawBtn.disabled=!!g.finished||!!g.drawOffer||!!g.drawDecisionOpen;
+    drawBtn.onclick=()=>{
+      if(g.finished)return;
+      if(g.mode==='online'){
+        if(!online.conn?.open){toast('상대방과 연결되어 있지 않습니다.');return}
+        g.drawOffer=true;renderAllGame(g);online.conn.send({type:'drawOffer'});
+        toast('무승부 제안을 보냈습니다.');
+      }else{
+        showDecisionModal('무승부 확인','이 경기를 무승부로 끝낼까요?','무승부','취소').then(ok=>{if(ok&&!g.finished)finishGame(g,'draw','무승부 합의')});
+      }
+    };
+  }
+  const flipBtn=qs('#flipBoard',host);if(flipBtn)flipBtn.onclick=()=>{g.flip=!g.flip;renderGame(g)};
+  const back=qs('#backSetup',host);if(back)back.onclick=()=>{stopTimer(g);activeGame=null;host.style.display='none';if(g.mode==='local')$('playSetup').style.display='block';else if(g.mode==='bot')$('botSetup').style.display='block';};
+  const rematch=qs('#rematchBtn',host);if(rematch)rematch.onclick=()=>{if(g.mode==='online')requestRematch();else restartGame(g)};
+}
+function formatClock(v){v=Math.max(0,v);const s=Math.floor(v);return `${Math.floor(s/60).toString().padStart(2,'0')}:${(s%60).toString().padStart(2,'0')}`}
+function rebuildRepetition(g){
+  g.rep={};
+  for(const snap of g.state.snapshots||[]){
+    const key=positionKey({board:snap.board,turn:snap.turn,castle:snap.castle||{wK:false,wQ:false,bK:false,bQ:false},ep:snap.ep,half:snap.half,full:snap.full,last:snap.last});
+    g.rep[key]=(g.rep[key]||0)+1;
+  }
+}
+function canTakeback(g){
+  if(!g||g.finished||!g.state.history.length)return false;
+  if(g.mode==='online')return false;
+  return true;
+}
+function takebackGame(g){
+  if(!canTakeback(g))return false;
+  const removeCount=g.mode==='bot'?Math.min(2,g.state.history.length):1;
+  const target=Math.max(0,g.state.history.length-removeCount);
+  const snap=g.state.snapshots[target];
+  if(!snap)return false;
+  const hist=g.state.history.slice(0,target);
+  g.state={board:cloneBoard(snap.board),turn:snap.turn,castle:{...snap.castle},ep:snap.ep?Array.from(snap.ep):null,half:snap.half,full:snap.full,whiteTime:snap.whiteTime,blackTime:snap.blackTime,last:snap.last?{from:snap.last.from.slice(),to:snap.last.to.slice()}:null,history:hist,snapshots:g.state.snapshots.slice(0,target+1)};
+  g.finished=false;g.result=null;g.reason=null;g.drawOffer=false;g.selected=null;g.lastTick=Date.now();rebuildRepetition(g);
+  renderGame(g);startTimer(g,refreshClockUI);
+  if(g.mode==='bot'&&g.state.turn!==g.playerColor)scheduleAI(g);
+  toast(g.mode==='bot'?'봇과 주고받은 마지막 수를 되돌렸습니다.':'마지막 수를 되돌렸습니다.');
+  return true;
+}
+function restartGame(g){
+  if(!g)return;
+  stopTimer(g);
+  const ng=makeGame(g.minutes,g.mode,g.playerColor,g.difficulty);ng.flip=g.flip;activeGame=ng;
+  if(g.mode==='online')return requestRematch();
+  if(g.mode==='bot'){ $('botGame').style.display='block';$('botSetup').style.display='none';renderGame(ng);startTimer(ng,refreshClockUI);if(ng.playerColor==='b')scheduleAI(ng);return; }
+  $('playGame').style.display='block';$('playSetup').style.display='none';renderGame(ng);startTimer(ng,refreshClockUI);
+}
+function capturedHTML(g,who){
+  const color=who==='w'?'b':'w';
+  return g.state.history.filter(h=>h.capture&&h.capturedType).map(h=>GLYPH[color][h.capturedType]).join('')||'';
+}
+function gamePlyAccuracy(g,side){
+  const hist=g.state.history||[];let total=0,count=0;
+  for(let i=0;i<hist.length;i++){
+    if((i%2===0?'w':'b')!==side)continue;
+    const before=g.state.snapshots[i];const after=g.state.snapshots[i+1];if(!before||!after)continue;
+    const beforeScore=evaluate(before,side);const afterScore=evaluate(after,side);const delta=afterScore-beforeScore;
+    let acc=100;
+    if(delta<-80)acc=45;else if(delta<-35)acc=65;else if(delta<0)acc=82;else if(delta<40)acc=95;
+    total+=acc;count++;
+  }
+  return count?Math.round(total/count):100;
+}
+function getOpeningName(history){
+  const s=history.map(x=>x.san).slice(0,8).join(' ');
+  if(/^e4 e5 Nf3 Nc6 Bb5/.test(s))return '스페인 오프닝 (Ruy Lopez)';
+  if(/^e4 e5 Nf3 Nf6/.test(s))return '페트로프 디펜스';
+  if(/^e4 c5/.test(s))return '시실리안 디펜스';
+  if(/^e4 e6/.test(s))return '프렌치 디펜스';
+  if(/^e4 c6/.test(s))return '카로-칸 디펜스';
+  if(/^d4 d5 c4/.test(s))return '퀸즈 갬빗';
+  if(/^d4 Nf6 c4 g6/.test(s))return '킹스 인디언 디펜스';
+  if(/^d4 Nf6 c4/.test(s))return '인디언 디펜스';
+  if(/^Nf3 d5/.test(s))return '레티 오프닝 계열';
+  if(/^e4 e5/.test(s))return '킹스 폰 오프닝';
+  if(/^d4 d5/.test(s))return '퀸즈 폰 오프닝';
+  return '오프닝 미정';
+}
+function resultToken(h){return h.result==='whiteWin'?'1-0':h.result==='blackWin'?'0-1':h.result==='draw'?'1/2-1/2':'*'}
+function historyToPGN(h){
+  const date=h.date||new Date().toLocaleString('ko-KR');
+  const moves=[];
+  for(let i=0;i<(h.history||[]).length;i+=2){
+    const w=h.history[i]?.san||'';const b=h.history[i+1]?.san||'';
+    moves.push(`${Math.floor(i/2)+1}. ${w}${b?' '+b:''}`);
+  }
+  return `[Event "chess.master Game"]\n[Site "chess.master"]\n[Date "${date.replace(/[\[\]\\]/g,'')}"]\n[Mode "${h.mode||'unknown'}"]\n[Time "${h.minutes||'?'}"]\n[Opening "${h.opening||getOpeningName(h.history||[])}"]\n[Result "${resultToken(h)}"]\n\n${moves.join(' ')} ${resultToken(h)}`;
+}
+async function downloadText(filename,text,type='application/octet-stream'){
+  // 가장 호환성이 좋은 방식: 일반 <a download>를 사용자 클릭 이벤트 안에서 실행.
+  // custom MIME은 브라우저에 따라 다운로드/열기 처리가 달라질 수 있으므로
+  // 실제 파일 내용은 JSON이고 확장자만 .cnova로 유지한다.
+  const downloadType = type==='application/x-chess-nova' ? 'application/json;charset=utf-8' : type;
+  const blob=new Blob([text],{type:downloadType});
+  const triggerAnchor=(href)=>{
+    const a=document.createElement('a');
+    a.href=href;a.download=filename;a.rel='noopener';a.style.position='fixed';a.style.left='-9999px';
+    document.body.appendChild(a);
+    try{
+      a.click();
+      return true;
+    }finally{
+      setTimeout(()=>a.remove(),100);
+    }
+  };
+  try{
+    const url=URL.createObjectURL(blob);
+    const ok=triggerAnchor(url);
+    setTimeout(()=>{try{URL.revokeObjectURL(url)}catch{}},5000);
+    if(ok){toast(`${filename} 다운로드를 시작했습니다.`);return true;}
+  }catch(e){console.warn('Blob 다운로드 실패',e)}
+  try{
+    const dataUrl='data:'+downloadType+';charset=utf-8,'+encodeURIComponent(text);
+    if(triggerAnchor(dataUrl)){toast(`${filename} 다운로드를 시작했습니다.`);return true;}
+  }catch(e){console.warn('Data URL 다운로드 실패',e)}
+  // 자동 다운로드가 차단된 브라우저를 위한 최후의 수단: 사용자가 직접 누를 수 있는 링크를 표시.
+  try{
+    const overlay=document.createElement('div');
+    overlay.className='modalOverlay';
+    const dataUrl='data:'+downloadType+';charset=utf-8,'+encodeURIComponent(text);
+    overlay.innerHTML=`<div class="roomCreateModal" style="max-width:520px"><h3 style="margin:0 0 8px">파일 저장</h3><p class="muted">브라우저가 자동 다운로드를 막았습니다. 아래 버튼을 한 번 눌러 파일을 저장하세요.</p><div class="actions"><a class="btn primary" href="${dataUrl}" download="${esc(filename)}">파일 다운로드</a><button class="btn" data-close>닫기</button></div></div>`;
+    document.body.appendChild(overlay);
+    overlay.querySelector('[data-close]').onclick=()=>overlay.remove();
+    overlay.addEventListener('click',e=>{if(e.target===overlay)overlay.remove()});
+    return false;
+  }catch(e){toast('다운로드를 시작하지 못했습니다. 브라우저의 다운로드 권한을 확인해주세요.');return false;}
+}
+function chessMasterGamePayload(h){
+  return JSON.stringify({
+    format:'CHESS_MASTER_GAME',
+    legacyFormat:'CHESS_NOVA_GAME',
+    version:2,
+    exportedAt:new Date().toISOString(),
+    app:'chess.master',
+    game:{
+      id:h.id||uid(),mode:h.mode||'local',minutes:h.minutes||10,date:h.date||new Date().toLocaleString('ko-KR'),
+      result:h.result||'draw',reason:h.reason||'',playerColor:h.playerColor||null,difficulty:h.difficulty||null,
+      history:Array.isArray(h.history)?h.history:[],snapshots:Array.isArray(h.snapshots)?h.snapshots:[],
+      finalBoard:h.finalBoard||null,whiteTime:Number(h.whiteTime)||0,blackTime:Number(h.blackTime)||0,
+      opening:h.opening||getOpeningName(h.history||[]),accuracy:h.accuracy||null,rating:h.rating||null
+    }
+  });
+}
+async function downloadWebsiteCopy(){
+  try{
+    const clone=document.documentElement.cloneNode(true);
+    clone.querySelectorAll('.authOverlay,.modalOverlay,.toast,[data-temp-popup]').forEach(el=>el.remove());
+    const html='<!doctype html>\n'+clone.outerHTML;
+    const ok=await downloadText('체스 마스터.html',html,'text/html;charset=utf-8');
+    if(ok)toast('실행 가능한 체스 마스터 HTML 다운로드를 시작했습니다.');
+    return ok;
+  }catch(e){
+    console.error(e);
+    toast('웹사이트 파일 저장에 실패했습니다.');
+    return false;
+  }
+}
+function normalizeAnalysisBoard(board){
+  if(!Array.isArray(board)||board.length!==8)throw new Error('분석용 체스판 크기가 올바르지 않습니다.');
+  return board.map(row=>{
+    if(!Array.isArray(row)||row.length!==8)throw new Error('분석용 체스판 한 줄의 크기가 올바르지 않습니다.');
+    return row.map(p=>{
+      if(p==null||p==='')return null;
+      if(typeof p==='string'){
+        if(/^[prnbqkPRNBQK]$/.test(p))return p;
+        throw new Error('분석 파일의 체스말 데이터가 올바르지 않습니다.');
+      }
+      if(typeof p==='object'){
+        const color=p.color==='w'||p.color==='white'?'w':p.color==='b'||p.color==='black'?'b':null;
+        const type=String(p.type||p.piece||'').toLowerCase();
+        if(color && /^[prnbqk]$/.test(type))return color==='w'?type.toUpperCase():type;
+      }
+      throw new Error('분석 파일의 체스말 데이터가 올바르지 않습니다.');
+    });
+  });
+}
+function normalizeAnalysisData(h){
+  if(!h||!Array.isArray(h.snapshots)||!h.snapshots.length)throw new Error('분석할 포지션이 없습니다.');
+  const history=Array.isArray(h.history)?h.history:[];
+  const snapshots=h.snapshots.map((snap,i)=>{
+    if(!snap||!snap.board)throw new Error(`포지션 ${i}의 체스판이 없습니다.`);
+    const ep=Array.isArray(snap.ep)&&snap.ep.length===2?[Number(snap.ep[0]),Number(snap.ep[1])]:null;
+    return {
+      board:normalizeAnalysisBoard(snap.board),
+      turn:snap.turn==='b'?'b':'w',
+      castle:{wK:!!snap.castle?.wK,wQ:!!snap.castle?.wQ,bK:!!snap.castle?.bK,bQ:!!snap.castle?.bQ},
+      ep:(ep&&ep.every(Number.isInteger))?ep:null,
+      half:Number(snap.half)||0,full:Number(snap.full)||1,
+      whiteTime:Number(snap.whiteTime)||0,blackTime:Number(snap.blackTime)||0,
+      last:snap.last&&Array.isArray(snap.last.from)&&Array.isArray(snap.last.to)?{from:[Number(snap.last.from[0]),Number(snap.last.from[1])],to:[Number(snap.last.to[0]),Number(snap.last.to[1])]}:null
+    };
+  });
+  if(snapshots.length<history.length+1)throw new Error('경기 수순과 포지션 데이터의 개수가 맞지 않습니다.');
+  return {...h,history,snapshots:snapshots.slice(0,history.length+1),finalBoard:normalizeAnalysisBoard(h.finalBoard||snapshots[snapshots.length-1].board)};
+}
+function analysisWindowHTML(h){
+  h=normalizeAnalysisData(h);
+  const safe=JSON.stringify(h).replace(/</g,'\\u003c').replace(/>/g,'\\u003e').replace(/&/g,'\\u0026');
+  const glyph=JSON.stringify(GLYPH);
+  const startFlip=h.playerColor==='b';
+  return `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>chess.master · 경기 분석</title><style>
+  :root{--bg:#171614;--panel:#242321;--panel2:#2e2c2a;--line:#45413d;--text:#f0eee9;--muted:#aaa59f;--accent:#8bc34a;--light:#f0d9b5;--dark:#b58863}
+  *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif}.wrap{min-height:100vh;padding:20px}.top{display:flex;justify-content:space-between;gap:16px;align-items:center;margin-bottom:16px}.title{font-size:24px;font-weight:850}.muted{color:var(--muted);font-size:13px}.layout{display:grid;grid-template-columns:minmax(320px,760px) minmax(280px,430px);gap:18px;max-width:1220px;margin:auto}.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px}.board{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));grid-template-rows:repeat(8,minmax(0,1fr));width:min(78vh,760px);max-width:100%;aspect-ratio:1;margin:auto;border-radius:10px;overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,.35)}.sq{display:grid;place-items:center;position:relative;font-family:"DejaVu Sans","Segoe UI Symbol",serif;font-size:clamp(30px,7vw,72px);user-select:none;min-width:0;min-height:0}.sq.light{background:var(--light)}.sq.dark{background:var(--dark)}.piece.w{color:#fff;text-shadow:0 2px 2px rgba(0,0,0,.65);-webkit-text-stroke:1px #222}.piece.b{color:#242424;text-shadow:0 2px 2px rgba(255,255,255,.18);-webkit-text-stroke:1px #aaa}.last{box-shadow:inset 0 0 0 4px rgba(255,215,80,.38)}.coord{position:absolute;font:700 10px/1 system-ui;color:rgba(0,0,0,.52)}.coord.file{right:4px;bottom:3px}.coord.rank{left:4px;top:3px}.sq.dark .coord{color:rgba(255,255,255,.68)}.btn{background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:9px;padding:10px 14px;font-weight:750;cursor:pointer}.btn.primary{background:var(--accent);color:#12200a;border-color:transparent}.moves{max-height:60vh;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:8px}.move{display:grid;grid-template-columns:42px 1fr 1fr;gap:6px;padding:7px 8px;border-radius:8px;cursor:pointer}.move:hover{background:var(--panel2)}.move.active{background:rgba(139,195,74,.16);outline:1px solid rgba(139,195,74,.35)}.metricGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px}.metric{background:var(--panel2);border-radius:10px;padding:10px}.metric small{display:block;color:var(--muted);font-size:11px}.metric strong{display:block;margin-top:3px}.nav{display:flex;gap:8px}.nav .btn{flex:1}.notice{padding:10px 12px;border-radius:10px;background:rgba(139,195,74,.10);border:1px solid rgba(139,195,74,.25);font-size:12px;color:var(--muted)}@media(max-width:850px){.layout{grid-template-columns:1fr}.board{width:min(94vw,760px)}.wrap{padding:10px}}
+</style></head><body><div class="wrap"><div class="top"><div><div class="title">♟ chess.master · 경기 분석</div><div class="muted">chess.master 경기 파일을 별도의 분석 창에서 확인하고 있습니다.</div></div><button class="btn" id="closeBtn">창 닫기</button></div><div class="layout"><section class="card"><div id="board" class="board"></div><div style="height:12px"></div><div class="nav"><button class="btn" id="first">처음</button><button class="btn" id="prev">이전</button><button class="btn" id="next">다음</button><button class="btn" id="last">마지막</button></div></section><aside><div class="card"><div class="metricGrid"><div class="metric"><small>결과</small><strong id="result"></strong></div><div class="metric"><small>종료 이유</small><strong id="reason"></strong></div><div class="metric"><small>총 수</small><strong id="total"></strong></div><div class="metric"><small>오프닝</small><strong id="opening"></strong></div></div><div class="notice">수순을 클릭하거나 ← / → 키를 사용하면 해당 포지션으로 이동합니다.</div></div><div style="height:12px"></div><div class="card"><h3 style="margin-top:0">수순</h3><div id="moves" class="moves"></div></div></aside></div></div><script>
+const DATA=${safe};const GLYPH=${glyph};const START_FLIP=${startFlip?'true':'false'};let idx=0;
+const esc=s=>String(s??'').replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]));
+function resultLabel(r){return r==='whiteWin'?'백 승리':r==='blackWin'?'흑 승리':'무승부'}
+function renderBoard(){
+  const st=DATA.snapshots[idx]||DATA.snapshots[0],root=document.getElementById('board');root.innerHTML='';
+  for(let vr=0;vr<8;vr++)for(let vc=0;vc<8;vc++){
+    const r=START_FLIP?7-vr:vr,c=START_FLIP?7-vc:vc;
+    const d=document.createElement('div');d.className='sq '+(((r+c)%2===0)?'light':'dark');
+    const prev=st.last;if(prev&&((prev.from[0]===r&&prev.from[1]===c)||(prev.to[0]===r&&prev.to[1]===c)))d.classList.add('last');
+    const p=st.board[r][c];
+    if(p){const sp=document.createElement('span');const color=p===p.toUpperCase()?'w':'b';const type=p.toLowerCase();sp.className='piece '+color;sp.textContent=GLYPH[color][type];d.appendChild(sp)}
+    if(vr===7){const f=document.createElement('span');f.className='coord file';f.textContent='abcdefgh'[c];d.appendChild(f)}
+    if(vc===0){const q=document.createElement('span');q.className='coord rank';q.textContent=8-r;d.appendChild(q)}
+    root.appendChild(d);
+  }
+  document.getElementById('result').textContent=resultLabel(DATA.result);document.getElementById('reason').textContent=DATA.reason||'';document.getElementById('total').textContent=(DATA.history?.length||0)+'수';document.getElementById('opening').textContent=DATA.opening||'오프닝 미정';renderMoves();
+}
+function renderMoves(){const root=document.getElementById('moves');root.innerHTML='<div class="move '+(idx===0?'active':'')+'" data-i="0"><div>—</div><div>게임 시작</div><div></div></div>';for(let i=0;i<(DATA.history||[]).length;i+=2){const row=document.createElement('div');row.className='move '+(idx===i+1||idx===i+2?'active':'');row.innerHTML='<div>'+(Math.floor(i/2)+1)+'.</div><div data-click="'+(i+1)+'">'+esc(DATA.history[i]?.san||'')+'</div><div data-click="'+(i+2)+'">'+esc(DATA.history[i+1]?.san||'')+'</div>';root.appendChild(row)}root.querySelectorAll('[data-click]').forEach(el=>el.onclick=()=>{idx=Math.max(0,Math.min(Number(el.dataset.click),DATA.snapshots.length-1));renderBoard()});root.querySelector('[data-i="0"]').onclick=()=>{idx=0;renderBoard()};}
+function cap(){idx=Math.max(0,Math.min(idx,DATA.snapshots.length-1));renderBoard()}
+document.getElementById('closeBtn').onclick=()=>window.close();document.getElementById('first').onclick=()=>{idx=0;cap()};document.getElementById('prev').onclick=()=>{idx--;cap()};document.getElementById('next').onclick=()=>{idx++;cap()};document.getElementById('last').onclick=()=>{idx=DATA.snapshots.length-1;cap()};window.addEventListener('keydown',e=>{if(['INPUT','TEXTAREA'].includes(document.activeElement?.tagName))return;if(e.key==='ArrowLeft'){e.preventDefault();idx--;cap()}else if(e.key==='ArrowRight'){e.preventDefault();idx++;cap()}else if(e.key==='Home'){e.preventDefault();idx=0;cap()}else if(e.key==='End'){e.preventDefault();idx=DATA.snapshots.length-1;cap()}});renderBoard();
+<\/script></body></html>`;
+}
+function openAnalysisInNewWindow(h){
+  try{h=normalizeAnalysisData(h)}catch(e){toast(e.message||'분석 데이터를 확인할 수 없습니다.');return null}
+  const w=window.open('about:blank','ChessMasterAnalysis','width=1250,height=900');
+  if(!w){
+    toast('새 창이 차단되었습니다. 팝업을 허용하거나 현재 창에서 분석하세요.');
+    analysisData=h;analysisIndex=0;showPage('analysis');return null;
+  }
+  try{w.document.open();w.document.write(analysisWindowHTML(h));w.document.close();w.focus();return w}catch(e){console.error(e);try{w.close()}catch{}toast('분석 창을 열지 못했습니다. 현재 창에서 분석합니다.');analysisData=h;analysisIndex=0;showPage('analysis');return null}
+}
+async function downloadChessMasterGame(h){
+  if(!h||!Array.isArray(h.history)||!Array.isArray(h.snapshots)){toast('저장할 경기 데이터가 없습니다.');return false;}
+  const safeId=String(h.id||'game').replace(/[^a-zA-Z0-9_-]/g,'').slice(0,24)||'game';
+  return downloadText(`체스 마스터-${safeId}.cnova`,chessMasterGamePayload(h),'application/x-chess-nova');
+}
+function validateChessMasterPayload(obj){
+  if(!obj||!(obj.format==='CHESS_MASTER_GAME'||obj.format==='CHESS_NOVA_GAME')||!obj.game)throw new Error('chess.master 전용 경기 파일이 아닙니다.');
+  const g=obj.game;
+  if(!Array.isArray(g.history)||!Array.isArray(g.snapshots)||!g.snapshots.length)throw new Error('경기 기록 데이터가 올바르지 않습니다.');
+  return normalizeAnalysisData({
+    id:String(g.id||uid()),mode:String(g.mode||'imported'),minutes:Number(g.minutes)||10,date:String(g.date||new Date().toLocaleString('ko-KR')),
+    result:['whiteWin','blackWin','draw'].includes(g.result)?g.result:'draw',reason:String(g.reason||'chess.master 파일 불러오기'),
+    playerColor:g.playerColor==='w'||g.playerColor==='b'?g.playerColor:null,difficulty:g.difficulty||null,
+    history:g.history,snapshots:g.snapshots,finalBoard:g.finalBoard||g.snapshots[g.snapshots.length-1].board,
+    whiteTime:Number(g.whiteTime)||0,blackTime:Number(g.blackTime)||0,opening:String(g.opening||getOpeningName(g.history||[])),
+    accuracy:g.accuracy||null,rating:g.rating||null,pgn:null
+  });
+}
+function openChessMasterImport(){
+  const overlay=document.createElement('div');overlay.className='modalOverlay';overlay.setAttribute('data-temp-popup','1');
+  overlay.innerHTML=`<div class="roomCreateModal" style="max-width:620px"><div class="statusRow"><div><h3 style="margin:0 0 6px">chess.master 경기 파일 불러오기</h3><div class="muted" style="font-size:13px">다운로드한 <strong>.cnova</strong> 경기 파일을 선택하세요.</div></div><button class="btn" data-close>취소</button></div><div style="height:14px"></div><label style="display:block;padding:24px;border:1px dashed #5a5651;border-radius:12px;text-align:center;cursor:pointer;background:#1d1c1a"><input data-file type="file" accept=".cnova,application/json" style="display:block;width:100%;margin-bottom:10px"><strong data-file-name>파일을 선택하세요</strong><div class="muted" style="margin-top:5px">chess.master 전용 .cnova만 불러올 수 있습니다.</div></label><div style="height:14px"></div><div class="status" data-status style="min-height:22px"></div></div>`;
+  document.body.appendChild(overlay);
+  const input=overlay.querySelector('[data-file]'),nameEl=overlay.querySelector('[data-file-name]'),statusEl=overlay.querySelector('[data-status]');
+  let imported=null;
+  input.onchange=async()=>{
+    const file=input.files?.[0];if(!file)return;
+    nameEl.textContent=file.name;statusEl.textContent='파일 확인 중...';statusEl.style.color='';
+    const oldActions=overlay.querySelector('[data-import-actions]');if(oldActions)oldActions.remove();
+    try{
+      if(!/\.cnova$/i.test(file.name))throw new Error('chess.master 경기 파일(.cnova)만 불러올 수 있습니다.');
+      if(file.size>10*1024*1024)throw new Error('경기 파일이 너무 큽니다.');
+      const text=await file.text();if(!text||text.length<20)throw new Error('파일 내용이 비어 있습니다.');
+      let obj;try{obj=JSON.parse(text)}catch{throw new Error('경기 파일 JSON 형식이 올바르지 않습니다.');}
+      imported=validateChessMasterPayload(obj);imported.pgn=historyToPGN(imported);statusEl.textContent='불러오기 성공 · 어디에서 열지 선택하세요.';
+      const actions=document.createElement('div');actions.className='actions';actions.setAttribute('data-import-actions','1');actions.style.marginTop='12px';actions.innerHTML='<button class="btn primary" data-open-current>이 창에서 보기</button><button class="btn primary" data-open-new>새 창에서 보기</button><button class="btn" data-close2>취소</button>';overlay.querySelector('.roomCreateModal').appendChild(actions);
+      actions.querySelector('[data-open-current]').onclick=()=>{analysisData=imported;analysisIndex=0;overlay.remove();showPage('analysis');toast('경기를 불러왔습니다.');};
+      actions.querySelector('[data-open-new]').onclick=()=>{const w=openAnalysisInNewWindow(imported);if(w)overlay.remove();};
+      actions.querySelector('[data-close2]').onclick=()=>overlay.remove();
+    }catch(e){imported=null;statusEl.textContent=e.message||'경기 파일을 읽을 수 없습니다.';statusEl.style.color='#ffb4ab';}
+  };
+  overlay.querySelector('[data-close]').onclick=()=>overlay.remove();overlay.addEventListener('click',e=>{if(e.target===overlay)overlay.remove()});
+}
+function stateToFEN(st){
+  const rows=st.board.map(row=>{let out='',empty=0;for(const p of row){if(!p)empty++;else{if(empty){out+=empty;empty=0}out+=p}}if(empty)out+=empty;return out}).join('/');
+  const rights=(st.castle.wK?'K':'')+(st.castle.wQ?'Q':'')+(st.castle.bK?'k':'')+(st.castle.bQ?'q':'')||'-';
+  const ep=st.ep?sqName(st.ep[0],st.ep[1]):'-';
+  return `${rows} ${st.turn} ${rights} ${ep} ${st.half||0} ${st.full||1}`;
+}
+function fenToState(fen){
+  const parts=fen.trim().split(/\s+/);if(parts.length<4)throw new Error('FEN 형식이 부족합니다.');
+  const rows=parts[0].split('/');if(rows.length!==8)throw new Error('FEN 보드가 잘못되었습니다.');const board=[];
+  for(const row of rows){const out=[];for(const ch of row){if(/[1-8]/.test(ch))for(let i=0;i<Number(ch);i++)out.push(null);else if(/[prnbqkPRNBQK]/.test(ch))out.push(ch);else throw new Error('잘못된 FEN 기호입니다.')}if(out.length!==8)throw new Error('FEN 한 줄의 칸 수가 8이 아닙니다.');board.push(out)}
+  if(!board.flat().includes('K')||!board.flat().includes('k'))throw new Error('백과 흑 킹이 모두 필요합니다.');
+  const turn=parts[1]==='b'?'b':'w';const cstr=parts[2]==='-'?'':parts[2];const castle={wK:cstr.includes('K'),wQ:cstr.includes('Q'),bK:cstr.includes('k'),bQ:cstr.includes('q')};
+  let ep=null;if(parts[3]&&parts[3]!=='-'){const p=parseSq(parts[3]);if(!p||!inBoard(p.r,p.c))throw new Error('FEN 앙파상 칸이 잘못되었습니다.');ep=[p.r,p.c]}
+  const half=Math.max(0,Number(parts[4]||0)||0),full=Math.max(1,Number(parts[5]||1)||1);
+  return {board,turn,castle,ep,half,full,whiteTime:600,blackTime:600,last:null,history:[],snapshots:[]};
+}
+function parsePGNText(text){
+  const movetext=text.replace(/\{[^}]*\}/gs,' ').replace(/;[^\n]*/g,' ').replace(/\[[^\]]*\]/g,' ').replace(/\([^)]*\)/g,' ');
+  const tokens=movetext.replace(/\s+/g,' ').trim().split(' ').map(t=>t.trim()).filter(Boolean).filter(t=>!/^\$\d+$/.test(t)).filter(t=>!/^\d+\.{1,3}$/.test(t)).filter(t=>!/^1-0$|^0-1$|^1\/2-1\/2$|^\*$/.test(t));
+  let st=newState(10);st.history=[];st.snapshots=[makeSnapshot(st)];
+  for(const raw of tokens){let token=raw.replace(/0-0-0/g,'O-O-O').replace(/0-0/g,'O-O').replace(/[!?]+$/,'');let m=legalMoves(st).find(x=>sanFor(st,x)===token);if(!m){m=legalMoves(st).find(x=>sanFor(st,x).replace(/[+#]$/,'')===token.replace(/[+#]$/,''));}if(!m)throw new Error(`수순을 해석할 수 없습니다: ${raw}`);const san=sanFor(st,m),a=applyMove(st,m),next=a.state;next.history=st.history.concat([{san,capture:!!a.captured,capturedType:a.captured?typeOf(a.captured):null,from:m.from.slice(),to:m.to.slice(),promotion:m.promotion||null,whiteTime:next.whiteTime,blackTime:next.blackTime}]);next.snapshots=st.snapshots.concat([makeSnapshot(next)]);st=next;}
+  return st;
+}
+function renderImportedAnalysis(st,label='가져온 PGN'){
+  const h={id:uid(),mode:'imported',minutes:10,date:new Date().toLocaleString('ko-KR'),result:'draw',reason:label,history:st.history,snapshots:st.snapshots,finalBoard:st.board,whiteTime:600,blackTime:600,opening:getOpeningName(st.history)};
+  analysisData=h;analysisIndex=st.snapshots.length-1;showPage('analysis');
+}
+function openPGNImport(){const input=document.createElement('input');input.type='file';input.accept='.pgn,.txt,text/plain';input.onchange=async()=>{const file=input.files?.[0];if(!file)return;try{const text=await file.text();const st=parsePGNText(text);renderImportedAnalysis(st,'PGN 불러오기');toast('PGN을 불러왔습니다.');}catch(e){toast(e.message||'PGN을 읽을 수 없습니다.')}};input.click();}
+function copyText(text){if(navigator.clipboard?.writeText)return navigator.clipboard.writeText(text);const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();return Promise.resolve()}
+function showFENTools(h){
+  const base=analysisData===h?h:null;const fen=base&&base.snapshots?.[analysisIndex]?stateToFEN(base.snapshots[analysisIndex]):stateToFEN({board:h.finalBoard,turn:'w',castle:{wK:false,wQ:false,bK:false,bQ:false},ep:null,half:0,full:1});
+  const overlay=document.createElement('div');overlay.className='modalOverlay';
+  overlay.innerHTML=`<div class="roomCreateModal"><h3 style="margin:0 0 6px">FEN / PGN 도구</h3><div class="muted" style="font-size:13px;margin-bottom:12px">현재 분석 위치의 FEN을 복사하거나, FEN을 입력해 보드를 불러올 수 있습니다.</div><div class="field"><label>FEN</label><textarea class="field input toolValue" id="fenToolValue">${esc(fen)}</textarea></div><div class="actions" style="margin-top:12px"><button class="btn" data-fen-copy>FEN 복사</button><button class="btn primary" data-fen-load>FEN 불러오기</button><button class="btn" data-fen-play>이 위치에서 플레이</button><button class="btn" data-close>닫기</button></div></div>`;
+  document.body.appendChild(overlay);
+  overlay.querySelector('[data-fen-copy]').onclick=()=>copyText(overlay.querySelector('#fenToolValue').value).then(()=>toast('FEN을 복사했습니다.'));
+  overlay.querySelector('[data-fen-load]').onclick=()=>{try{const st=fenToState(overlay.querySelector('#fenToolValue').value);st.snapshots=[makeSnapshot(st)];renderImportedAnalysis(st,'FEN 위치');overlay.remove();}catch(e){toast(e.message||'FEN이 올바르지 않습니다.')}};
+  overlay.querySelector('[data-fen-play]').onclick=()=>{try{const st=fenToState(overlay.querySelector('#fenToolValue').value);st.snapshots=[makeSnapshot(st)];const g=makeGame(10,'local','w');g.state=st;g.rep={[positionKey(st)]:1};g.flip=false;activeGame=g;overlay.remove();showPage('play');$('playSetup').style.display='none';$('playGame').style.display='block';renderGame(g);startTimer(g,refreshClockUI);toast('FEN 위치에서 게임을 시작합니다.');}catch(e){toast(e.message||'FEN이 올바르지 않습니다.')}};
+  overlay.querySelector('[data-close]').onclick=()=>overlay.remove();overlay.addEventListener('click',e=>{if(e.target===overlay)overlay.remove()});
+}
+function startGameUI(g,rootId,setupId){activeGame=g;$(setupId).style.display='none';$(rootId).style.display='block';renderGame(g);startTimer(g,refreshClockUI);if(g.mode==='bot'&&g.playerColor==='b')scheduleAI(g)}
+function normalizeBotDifficulty(v){return BOT_LEVELS[v]?v:(BOT_COMPAT[v]||'level3')}
+function botDifficultyInfo(v){const cfg=BOT_LEVELS[normalizeBotDifficulty(v)]||BOT_LEVELS.level3;return `${cfg.label} · 최대 ${cfg.depth}단계 탐색 · 약 ${cfg.budget}ms 검색 예산`}
+function makeChoices(){
+  const groups=[['playTimeChoices',10],['botTimeChoices',10],['onlineTimeChoices',10]];
+  for(const [id,def] of groups){
+    const root=$(id);root.innerHTML=[1,5,10,20].map(v=>`<button class="choice ${v===def?'active':''}" data-v="${v}">${v}분</button>`).join('');root.dataset.value=def;
+    root.onclick=e=>{const b=e.target.closest('[data-v]');if(!b)return;qsa('.choice',root).forEach(x=>x.classList.remove('active'));b.classList.add('active');root.dataset.value=b.dataset.v};
+  }
+  const saved=normalizeBotDifficulty(localStorage.getItem('cn-bot-difficulty')||'level3');
+  const sets=[
+    ['playColorChoices',[['w','백'],['b','흑'],['random','랜덤']],'w'],
+    ['botColorChoices',[['w','백'],['b','흑'],['random','랜덤']],'w'],
+    ['botDiffChoices',Object.entries(BOT_LEVELS).map(([v,c])=>[v,c.label]),saved]
+  ];
+  for(const [id,vals,def] of sets){
+    const root=$(id);root.innerHTML=vals.map(([v,t])=>`<button class="choice ${v===def?'active':''}" data-v="${v}">${t}</button>`).join('');root.dataset.value=def;
+    root.onclick=e=>{const b=e.target.closest('[data-v]');if(!b)return;qsa('.choice',root).forEach(x=>x.classList.remove('active'));b.classList.add('active');root.dataset.value=b.dataset.v;if(id==='botDiffChoices'){localStorage.setItem('cn-bot-difficulty',normalizeBotDifficulty(b.dataset.v));const info=$('botDiffInfo');if(info)info.textContent=botDifficultyInfo(b.dataset.v)}};
+    if(id==='botDiffChoices'){const info=$('botDiffInfo');if(info)info.textContent=botDifficultyInfo(def);}
+  }
+  $('onlineTimeChoices').dataset.value='10';$('playTimeChoices').dataset.value='10';$('botTimeChoices').dataset.value='10';
+}
+function resolveColor(v){return v==='random'?(Math.random()<.5?'w':'b'):v||'w'}
+function startLocal(){const mins=Number($('playTimeChoices').dataset.value||10);const c=resolveColor($('playColorChoices').dataset.value);const g=makeGame(mins,'local',c);g.flip=c==='b';startGameUI(g,'playGame','playSetup')}
+function startBot(){const mins=Number($('botTimeChoices').dataset.value||10),c=resolveColor($('botColorChoices').dataset.value),d=$('botDiffChoices').dataset.value||'level3';const g=makeGame(mins,'bot',c,d);g.flip=c==='b';startGameUI(g,'botGame','botSetup')}
+function updateRating(g){
+  if(!session||!['bot','online'].includes(g.mode))return null;
+  const key='cn-rating-'+session;const before=Number(localStorage.getItem(key)||1200);const opponent=1200;
+  let score=g.result==='draw'?.5:((g.mode==='bot'&&g.playerColor==='w'&&g.result==='whiteWin')||(g.mode==='bot'&&g.playerColor==='b'&&g.result==='blackWin')||(g.mode==='online'&&((online.color==='w'&&g.result==='whiteWin')||(online.color==='b'&&g.result==='blackWin')))?1:0);
+  const expected=1/(1+Math.pow(10,(opponent-before)/400));const after=Math.max(100,Math.round(before+32*(score-expected)));localStorage.setItem(key,String(after));return {before,after,opponent};
+}
+function saveFinishedGame(g){const user=session||'guest';const key='cn-history-'+user;const hist=loadJson(key,[]);const rating=updateRating(g);const rec={id:g.id,mode:g.mode,minutes:g.minutes,date:new Date().toLocaleString('ko-KR'),result:g.result,reason:g.reason,playerColor:g.playerColor||null,difficulty:g.difficulty||null,history:g.state.history,snapshots:g.state.snapshots,finalBoard:g.state.board,whiteTime:g.state.whiteTime,blackTime:g.state.blackTime,opening:getOpeningName(g.state.history),accuracy:{white:gamePlyAccuracy(g,'w'),black:gamePlyAccuracy(g,'b')},pgn:null,rating:rating};rec.pgn=historyToPGN(rec);hist.unshift(rec);saveJson(key,hist.slice(0,50));analysisData=rec}
+function renderHome(){renderBoard($('homeBoard'),newState(10),{coords:true});const svg=$('homeArrows');drawArrows(svg,[],false);const hist=loadJson('cn-history-'+(session||'guest'),[]);$('homeHistory').innerHTML=hist.length?hist.slice(0,4).map(h=>`<div class="historyItem"><div><strong>${gameResultLabel(h.result)}</strong><div class="muted" style="font-size:12px">${esc(h.mode)} · ${h.minutes}분 · ${esc(h.date)}</div></div><button class="btn" data-analysis-id="${esc(h.id)}">보기</button></div>`).join(''):'<div class="empty">아직 끝난 경기가 없습니다.</div>';$('homeAnalysis').innerHTML=hist[0]?`<div class="metric"><small>결과</small><strong>${gameResultLabel(hist[0].result)}</strong></div>`:'<div class="empty">마지막 경기 없음</div>';qsa('[data-analysis-id]').forEach(b=>b.onclick=()=>{const h=hist.find(x=>x.id===b.dataset.analysisId);analysisData=h;analysisIndex=0;showPage('analysis')});}
+function renderAnalysis(){
+  const root=$('analysisRoot');
+  if(!analysisData){const hist=loadJson('cn-history-'+(session||'guest'),[]);analysisData=hist[0]||null}
+  if(!analysisData){root.innerHTML='<div class="card empty">분석할 경기가 없습니다. 먼저 한 판을 끝내보세요.</div>';return}
+  const snaps=analysisData.snapshots||[];if(!snaps.length){root.innerHTML='<div class="card empty">이 기록에는 분석용 포지션이 없습니다.</div>';return}
+  analysisIndex=Math.min(analysisIndex,snaps.length-1);
+  const snap=snaps[analysisIndex];const temp={board:cloneBoard(snap.board),turn:snap.turn,castle:{...snap.castle},ep:snap.ep,half:snap.half,full:snap.full,whiteTime:snap.whiteTime,blackTime:snap.blackTime,last:snap.last};
+  const total=analysisData.history?.length||0;const accW=analysisData.accuracy?.white??gamePlyAccuracy({state:{history:analysisData.history,snapshots:analysisData.snapshots}},'w');const accB=analysisData.accuracy?.black??gamePlyAccuracy({state:{history:analysisData.history,snapshots:analysisData.snapshots}},'b');
+  root.innerHTML=`<div class="analysisLayout"><div class="card boardWrap"><div class="boardShell"><div class="boardArea"><div class="board" id="analysisBoard"></div><svg class="arrows" id="analysisArrows"></svg></div></div></div><div class="grid"><div class="card"><div class="engine"><div class="metric"><small>결과</small><strong>${gameResultLabel(analysisData.result)}</strong></div><div class="metric"><small>종료 이유</small><strong>${esc(analysisData.reason||'')}</strong></div><div class="metric"><small>총 수</small><strong>${total}</strong></div><div class="metric"><small>오프닝</small><strong>${esc(analysisData.opening||getOpeningName(analysisData.history||[]))}</strong></div><div class="metric"><small>백 간이 정확도</small><strong>${accW}%</strong></div><div class="metric"><small>흑 간이 정확도</small><strong>${accB}%</strong></div></div><div style="height:12px"></div><div class="actions"><button class="btn" id="anFirst">처음</button><button class="btn" id="anPrev">이전</button><button class="btn" id="anNext">다음</button><button class="btn" id="anLast">마지막</button></div><div style="height:12px"></div><div class="status">${analysisIndex===0?'초기 포지션':`${analysisIndex}수째 위치 · ${analysisData.history?.[analysisIndex-1]?.san||''}`}</div></div><div class="card"><h3>수순</h3><div class="moves analysisMoves" id="analysisMoves"></div></div><div class="card"><h3>게임 파일 / 포지션</h3><div class="advancedGrid"><button class="btn" id="copyPgnBtn">PGN 복사</button><button class="btn primary" id="downloadNovaBtn">⬇ 경기 파일 다운로드</button><button class="btn" id="importNovaBtn">📂 경기 파일 불러오기</button><button class="btn" id="newAnalysisWindowBtn">새 창에서 분석</button><button class="btn" id="fenToolsBtn">FEN 도구</button></div><div style="height:10px"></div><div class="notice">경기 파일은 <strong>.cnova</strong> 형식으로 실제 다운로드됩니다. 불러오면 별도의 분석 창에서 열립니다.</div></div><div class="card"><h3>레이팅</h3><div class="statusRow"><span class="ratingBadge">현재 ${session?Number(localStorage.getItem('cn-rating-'+session)||1200):'로그인 필요'}점</span><span class="muted" style="font-size:12px">봇/온라인 경기 기준</span></div></div></div></div>`;
+  renderBoard($('analysisBoard'),temp,{coords:true,last:snap.last});renderMovesForAnalysis($('analysisMoves'));setupAnalysisNav();
+  $('copyPgnBtn').onclick=()=>copyText(analysisData.pgn||historyToPGN(analysisData)).then(()=>toast('PGN을 복사했습니다.'));
+  $('downloadNovaBtn').onclick=()=>downloadChessMasterGame(analysisData);
+  $('importNovaBtn').onclick=openChessMasterImport;
+  $('newAnalysisWindowBtn').onclick=()=>openAnalysisInNewWindow(analysisData);
+  $('fenToolsBtn').onclick=()=>showFENTools(analysisData);
+} 
+function renderMovesForAnalysis(root){root.innerHTML='<div class="moveCell '+(analysisIndex===0?'selected':'')+'" data-a="0">게임 시작</div>'+analysisData.history.map((m,i)=>`<div class="moveCell ${analysisIndex===i+1?'selected':''}" data-a="${i+1}">${Math.floor(i/2)+1}${i%2===0?'.':'...'} ${esc(m.san)}</div>`).join('');qsa('[data-a]',root).forEach(el=>el.onclick=()=>{analysisIndex=Number(el.dataset.a);renderAnalysis()})}
+function setupAnalysisNav(){$('anFirst').onclick=()=>{analysisIndex=0;renderAnalysis()};$('anPrev').onclick=()=>{analysisIndex=Math.max(0,analysisIndex-1);renderAnalysis()};$('anNext').onclick=()=>{analysisIndex=Math.min(analysisData.snapshots.length-1,analysisIndex+1);renderAnalysis()};$('anLast').onclick=()=>{analysisIndex=analysisData.snapshots.length-1;renderAnalysis()}}
+function getRecordOutcome(h){
+  if(!h) return 'unknown';
+  if(h.result==='draw') return 'draw';
+  const pc=h.playerColor;
+  if(pc==='w'||pc==='b'){
+    const won=(pc==='w'&&h.result==='whiteWin')||(pc==='b'&&h.result==='blackWin');
+    const lost=(pc==='w'&&h.result==='blackWin')||(pc==='b'&&h.result==='whiteWin');
+    if(won)return 'win';
+    if(lost)return 'loss';
+  }
+  // 오래된 기록처럼 playerColor가 없는 결정적 경기에서는 승패를 추측하지 않는다.
+  return 'unknown';
+}
+function renderHistory(){
+  const root=$('historyRoot');
+  let hist=loadJson('cn-history-'+(session||'guest'),[]);
+  if(!hist.length){root.innerHTML='<div class="empty">아직 경기 기록이 없습니다.</div>';return}
+  root.innerHTML=`<div class="statusRow" style="margin-bottom:10px;gap:8px;flex-wrap:wrap"><span class="ratingBadge">현재 레이팅 ${session?Number(localStorage.getItem('cn-rating-'+session)||1200):'게스트'}</span><span class="muted" style="font-size:12px">최대 50경기 저장</span></div><div class="advancedGrid" style="margin-bottom:12px"><input id="historySearch" class="toolValue" style="min-height:44px;resize:none" placeholder="상대·모드·종료 이유 검색"><select id="historyFilter" class="toolValue" style="min-height:44px"><option value="all">전체</option><option value="win">승리</option><option value="loss">패배</option><option value="draw">무승부</option><option value="bot">봇</option><option value="online">온라인</option><option value="local">플레이</option></select></div><div id="historyList"></div>`;
+  const list=$('historyList');const search=$('historySearch'),filter=$('historyFilter');
+  const draw=()=>{
+    const q=(search.value||'').trim().toLowerCase();const f=filter.value;
+    const rows=hist.filter(h=>{
+      const text=[h.date,h.mode,h.reason,h.opening,h.difficulty].join(' ').toLowerCase();
+      if(q&&!text.includes(q))return false;
+      const outcome=getRecordOutcome(h);
+      if(f==='win'&&outcome!=='win')return false;
+      if(f==='loss'&&outcome!=='loss')return false;
+      if(f==='draw'&&outcome!=='draw')return false;
+      if(f==='bot'&&h.mode!=='bot')return false;
+      if(f==='online'&&h.mode!=='online')return false;
+      if(f==='local'&&h.mode!=='local')return false;
+      return true;
+    });
+    list.innerHTML=rows.length?rows.map(h=>`<div class="historyItem"><div><strong>${gameResultLabel(h.result)}</strong><div class="muted" style="font-size:12px">${esc(h.date)} · ${esc(h.mode)} · ${h.minutes||'?'}분 · ${esc(h.reason||'')} · ${esc(h.opening||'')}</div></div><button class="btn" data-hid="${esc(h.id)}">분석</button></div>`).join(''):'<div class="empty">조건에 맞는 경기가 없습니다.</div>';
+    qsa('[data-hid]',list).forEach(b=>b.onclick=()=>{analysisData=hist.find(h=>h.id===b.dataset.hid);analysisIndex=0;showPage('analysis')});
+  };
+  search.oninput=draw;filter.onchange=draw;draw();
+}
+function renderProfile(){
+  const root=$('profileRoot');
+  if(!session){root.innerHTML='<div class="card empty">프로필은 로그인 후 사용할 수 있습니다.</div>';return}
+  const hist=loadJson('cn-history-'+session,[]);const rating=Number(localStorage.getItem('cn-rating-'+session)||1200);
+  const wins=hist.filter(h=>(h.result==='whiteWin'&&h.playerColor==='w')||(h.result==='blackWin'&&h.playerColor==='b')).length;
+  const losses=hist.filter(h=>(h.result==='whiteWin'&&h.playerColor==='b')||(h.result==='blackWin'&&h.playerColor==='w')).length;
+  const draws=hist.filter(h=>h.result==='draw').length;const total=hist.length;const rate=total?Math.round((wins/total)*100):0;
+  root.innerHTML=`<div class="grid grid2"><div class="card"><div class="statusRow"><div><div style="font-size:22px;font-weight:900">${esc(session)}</div><div class="muted">chess.master 회원</div></div><div class="avatar" style="width:58px;height:58px;font-size:24px">${esc(session.charAt(0).toUpperCase())}</div></div><div style="height:16px"></div><div class="metricGrid"><div class="metric"><small>현재 레이팅</small><strong>${rating}</strong></div><div class="metric"><small>총 경기</small><strong>${total}</strong></div><div class="metric"><small>승리</small><strong>${wins}</strong></div><div class="metric"><small>패배</small><strong>${losses}</strong></div><div class="metric"><small>무승부</small><strong>${draws}</strong></div><div class="metric"><small>승률</small><strong>${rate}%</strong></div></div></div><div class="card"><h3>데이터 관리</h3><div class="actions"><button class="btn primary" id="backupDataBtn">내 데이터 백업</button><button class="btn" id="restoreDataBtn">데이터 복원</button></div><div class="notice" style="margin-top:12px">복원은 기존 데이터를 자동 삭제하지 않고 회원 계정과 경기 기록을 병합합니다.</div></div></div>`;
+  $('backupDataBtn').onclick=backupUserData;$('restoreDataBtn').onclick=restoreUserData;
+}
+function backupUserData(){
+  if(!session){toast('데이터 백업은 로그인 후 사용할 수 있습니다.');return}
+  const payload={format:'CHESS_MASTER_BACKUP',version:1,app:'chess.master',exportedAt:new Date().toISOString(),username:session,users:{},settings:loadJson('cn-settings',DEFAULT_SETTINGS),history:loadJson('cn-history-'+session,[]),rating:localStorage.getItem('cn-rating-'+session)||'1200'};
+  const users=loadJson('cn-users',{});if(users[session])payload.users[session]=users[session];
+  downloadText(`체스 마스터-백업-${session}.json`,JSON.stringify(payload,null,2),'application/json');
+}
+function restoreUserData(){
+  if(!session){toast('데이터 복원은 로그인 후 사용할 수 있습니다.');return}
+  const input=document.createElement('input');input.type='file';input.accept='.json,application/json';input.onchange=async()=>{const file=input.files?.[0];if(!file)return;try{const obj=JSON.parse(await file.text());if(obj?.format!=='CHESS_MASTER_BACKUP'||!obj.history)throw new Error('chess.master 백업 파일이 아닙니다.');if(!(await showDecisionModal('데이터 복원','기존 계정과 경기 기록을 유지하면서 백업 데이터를 병합할까요?','복원','취소')))return;const users=loadJson('cn-users',{});if(obj.users&&obj.users[session])users[session]=obj.users[session];saveJson('cn-users',users);const oldHist=loadJson('cn-history-'+session,[]);const merged=[...oldHist];for(const rec of obj.history||[]){if(rec?.id&&!merged.some(x=>x.id===rec.id))merged.push(rec)}merged.sort((a,b)=>String(b.date).localeCompare(String(a.date)));saveJson('cn-history-'+session,merged.slice(0,50));if(obj.rating) localStorage.setItem('cn-rating-'+session,String(Math.max(100,Number(obj.rating)||1200)));if(obj.settings&&typeof obj.settings==='object'){settings={...settings,...obj.settings};saveJson('cn-settings',settings);applyTheme()}renderCurrentPage();toast('백업 데이터를 병합했습니다.');}catch(e){toast(e.message||'백업 파일을 불러오지 못했습니다.')}};input.click();
+}
+function renderSettings(){const root=$('settingsRoot');const row=(key,label,desc)=>`<div class="settingRow"><div><strong>${label}</strong><div class="muted" style="font-size:12px;margin-top:3px">${desc}</div></div><button class="switch ${settings[key]?'on':''}" data-set="${key}"><span></span></button></div>`;root.innerHTML=row('coords','좌표 표시','a–h, 1–8 좌표 표시')+row('legal','가능한 이동 표시','선택한 말의 이동 가능 칸 표시')+row('last','마지막 수 표시','직전 이동 칸 강조')+row('animation','애니메이션','간단한 UI 효과 사용')+row('sound','게임 사운드','이동·잡기·체크·종료 효과음')+`<div class="settingRow"><div><strong>사운드 테스트</strong><div class="muted" style="font-size:12px;margin-top:3px">게임에서 사용되는 자체 효과음을 미리 들을 수 있습니다.</div></div><div class="soundTestGrid"><button class="btn smallBtn" data-sound-test="move">이동</button><button class="btn smallBtn" data-sound-test="capture">잡기</button><button class="btn smallBtn" data-sound-test="check">체크</button><button class="btn smallBtn" data-sound-test="mate">체크메이트</button></div></div><div class="settingRow"><div><strong>계정</strong><div class="muted" style="font-size:12px;margin-top:3px">${session?`현재 로그인: ${esc(session)}`:'로그인하면 경기 기록을 계정별로 저장합니다.'}</div></div><button class="btn ${session?'danger':'primary'}" id="settingsAuthBtn">${session?'로그아웃':'로그인 / 회원가입'}</button></div><div class="settingRow"><div><strong>테마</strong><div class="muted" style="font-size:12px;margin-top:3px">다크 또는 라이트</div></div><div class="actions"><button class="choice ${settings.theme==='dark'?'active':''}" data-theme="dark">다크</button><button class="choice ${settings.theme==='light'?'active':''}" data-theme="light">라이트</button></div></div><div class="settingRow"><div><strong>체스판 테마</strong><div class="muted" style="font-size:12px;margin-top:3px">클래식 · 숲 · 파랑 · 보라 · 나무</div></div><div class="actions"><button class="choice ${(settings.boardTheme||'classic')==='classic'?'active':''}" data-board-theme="classic">클래식</button><button class="choice ${(settings.boardTheme||'classic')==='forest'?'active':''}" data-board-theme="forest">숲</button><button class="choice ${(settings.boardTheme||'classic')==='blue'?'active':''}" data-board-theme="blue">파랑</button><button class="choice ${(settings.boardTheme||'classic')==='purple'?'active':''}" data-board-theme="purple">보라</button><button class="choice ${(settings.boardTheme||'classic')==='wood'?'active':''}" data-board-theme="wood">나무</button></div></div><div class="settingRow"><div><strong>볼륨</strong><div class="muted" style="font-size:12px;margin-top:3px">현재 ${Math.round(settings.volume*100)}%</div></div><input id="volumeRange" type="range" min="0" max="1.2" step=".05" value="${Math.min(1.2,settings.volume)}"></div><div class="settingRow"><div><strong>데이터 백업</strong><div class="muted" style="font-size:12px;margin-top:3px">회원 계정과 경기 기록을 안전하게 내보내고 복원합니다.</div></div><div class="actions"><button class="btn" id="backupDataSettingsBtn">백업</button><button class="btn" id="restoreDataSettingsBtn">복원</button></div></div><div class="settingRow"><div><strong>웹사이트 파일</strong><div class="muted" style="font-size:12px;margin-top:3px">현재 chess.master 웹앱을 실제로 실행할 수 있는 「체스 마스터.html」 파일로 저장합니다.</div></div><button class="btn primary" id="downloadWebsiteBtn">웹사이트 다운로드</button></div>`;qsa('[data-set]',root).forEach(b=>b.onclick=()=>{const k=b.dataset.set;settings[k]=!settings[k];saveJson('cn-settings',settings);renderSettings();applyTheme();renderCurrentPage()});qsa('[data-theme]',root).forEach(b=>b.onclick=()=>{settings.theme=b.dataset.theme;saveJson('cn-settings',settings);applyTheme();renderSettings()});qsa('[data-board-theme]',root).forEach(b=>b.onclick=()=>{settings.boardTheme=b.dataset.boardTheme;saveJson('cn-settings',settings);applyTheme();renderSettings();renderCurrentPage()});$('volumeRange').oninput=e=>{settings.volume=Number(e.target.value);saveJson('cn-settings',settings)};const dw=$('downloadWebsiteBtn');if(dw)dw.onclick=downloadWebsiteCopy;const bd=$('backupDataSettingsBtn');if(bd)bd.onclick=backupUserData;const rd=$('restoreDataSettingsBtn');if(rd)rd.onclick=restoreUserData;qsa('[data-sound-test]',root).forEach(b=>b.onclick=()=>playSound(b.dataset.soundTest));const ab=$('settingsAuthBtn');if(ab)ab.onclick=()=>{if(session){session='';localStorage.removeItem('cn-session');renderUserArea();renderSettings();toast('로그아웃했습니다.')}else openAuthModal()}}
+function applyTheme(){document.body.classList.toggle('light',settings.theme==='light');document.body.dataset.boardTheme=settings.boardTheme||'classic';}
+function renderUserArea(){
+  const root=$('userArea');
+  if(session){
+    const ch=session.charAt(0).toUpperCase();
+    root.innerHTML=`<div class="userrow"><div class="avatar">${esc(ch)}</div><div class="usertext"><strong>${esc(session)}</strong><span>로그인됨</span></div></div><button class="btn" style="width:100%" id="logoutBtn">로그아웃</button>`;
+    $('logoutBtn').onclick=()=>{session='';guestMode=false;localStorage.removeItem('cn-session');renderUserArea();toast('로그아웃했습니다. 다시 로그인하거나 게스트로 플레이하세요.');setTimeout(()=>openAuthModal(true),120)};
+  }else if(guestMode){
+    root.innerHTML=`<div class="userrow"><div class="avatar">G</div><div class="usertext"><strong>게스트</strong><span>플레이 · 경기 기록</span></div></div><button class="btn primary" style="width:100%" id="guestLoginBtn">로그인</button>`;
+    $('guestLoginBtn').onclick=()=>openAuthModal(false);
+  }else{
+    root.innerHTML='<button class="btn primary" style="width:100%" id="loginBtn">로그인 / 회원가입</button>';
+    $('loginBtn').onclick=()=>openAuthModal(false);
+  }
+}
+function openAuthModal(force=false,initial='login'){
+  if(authShown&&!force)return;
+  authShown=true;
+  const old=document.getElementById('authOverlay');old?.remove();
+  const overlay=document.createElement('div');overlay.className='authOverlay';overlay.id='authOverlay';
+  document.body.appendChild(overlay);
+
+  const renderAuthView=(mode='login',message='')=>{
+    const signup=mode==='signup';
+    overlay.innerHTML=`<div class="authModal">
+      <div class="authHero"><div class="logo">♞</div><div><h2>${signup?'회원가입':'chess.master 로그인'}</h2><p>${signup?'새 chess.master 계정을 만들어 게임 기록을 저장하세요.':'체스를 시작하려면 로그인하거나 게스트로 계속하세요.'}</p></div></div>
+      <div class="form">
+        <div class="field"><label>아이디</label><input id="authUser" autocomplete="username" placeholder="3~18자"></div>
+        <div class="field"><label>비밀번호</label><input id="authPass" type="password" autocomplete="${signup?'new-password':'current-password'}" placeholder="4자 이상"></div>
+        ${signup?'<div class="field"><label>비밀번호 확인</label><input id="authPass2" type="password" autocomplete="new-password" placeholder="비밀번호를 한 번 더 입력"></div>':''}
+        <div class="actions">
+          <button class="btn primary" id="authMain">${signup?'회원가입':'로그인'}</button>
+          <button class="btn" id="authSwitch">${signup?'로그인으로 돌아가기':'회원가입'}</button>
+        </div>
+        ${signup?'':'<div class="authGuest"><strong>게스트 플레이</strong><span class="muted" style="font-size:13px">계정 없이 바로 플레이할 수 있습니다. 게스트는 온라인 플레이와 봇 플레이를 사용할 수 없고 같은 기기에서 플레이만 가능합니다.</span><div style="height:8px"></div><button class="btn" id="guestBtn" style="width:100%">게스트로 계속</button></div>'}
+        <div id="authMsg" class="muted" style="font-size:13px">${esc(message)}</div>
+      </div>
+    </div>`;
+
+    $('authSwitch').onclick=()=>renderAuthView(signup?'login':'signup');
+    $('authMain').onclick=async()=>{
+      const u=$('authUser').value.trim(),p=$('authPass').value;
+      if(!/^[A-Za-z0-9_가-힣]{3,18}$/.test(u)||p.length<4){$('authMsg').textContent='아이디 3~18자, 비밀번호 4자 이상을 입력하세요.';return}
+      const users=loadJson('cn-users',{});
+      if(signup){
+        const p2=$('authPass2').value;
+        if(p!==p2){$('authMsg').textContent='비밀번호가 서로 다릅니다.';return}
+        if(users[u]){$('authMsg').textContent='이미 존재하는 아이디입니다.';return}
+        users[u]=await hashPass(p);saveJson('cn-users',users);session=u;guestMode=false;localStorage.setItem('cn-session',session);close();renderUserArea();renderCurrentPage();toast('회원가입과 로그인이 완료되었습니다.');
+      }else{
+        if(!users[u]||users[u]!==await hashPass(p)){$('authMsg').textContent='아이디 또는 비밀번호가 맞지 않습니다.';return}
+        session=u;guestMode=false;localStorage.setItem('cn-session',session);close();renderUserArea();renderCurrentPage();toast('로그인되었습니다.');
+      }
+    };
+    const guest=$('guestBtn');
+    if(guest)guest.onclick=()=>{session='';guestMode=true;close();renderUserArea();renderCurrentPage();toast('게스트 모드입니다. 같은 기기에서 플레이만 사용할 수 있습니다.')};
+    const first=$('authUser');first?.focus();
+  };
+  const close=()=>{authShown=false;overlay.remove()};
+  overlay.addEventListener('keydown',e=>{if(e.key==='Escape'&&!force)close()});
+  renderAuthView(initial);
+}
+async function hashPass(p){if(window.crypto?.subtle){const data=new TextEncoder().encode(p);const buf=await crypto.subtle.digest('SHA-256',data);return [...new Uint8Array(buf)].map(x=>x.toString(16).padStart(2,'0')).join('')}let h=2166136261;for(let i=0;i<p.length;i++){h^=p.charCodeAt(i);h=Math.imul(h,16777619)}return (h>>>0).toString(16)}
+function showPage(page){if(!session&&!guestMode&&page!=='home'){openAuthModal(false);return}if(guestMode&&['bot','online'].includes(page)){toast('게스트는 일반 플레이와 경기 기록만 사용할 수 있습니다. 봇/온라인은 로그인 후 이용해주세요.');openAuthModal(false);return}currentPage=page;document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id==='page-'+page));qsa('#nav button,#bottomNav button').forEach(b=>b.classList.toggle('active',b.dataset.page===page));renderCurrentPage();}
+function renderCurrentPage(){renderUserArea();if(currentPage==='home')renderHome();else if(currentPage==='analysis')renderAnalysis();else if(currentPage==='history')renderHistory();else if(currentPage==='profile')renderProfile();else if(currentPage==='settings')renderSettings();}
+qsa('#nav button,#bottomNav button').forEach(b=>b.onclick=()=>showPage(b.dataset.page));qsa('[data-open]').forEach(b=>b.onclick=()=>showPage(b.dataset.open));
+$('startLocal').onclick=startLocal;$('startBot').onclick=()=>{if(guestMode){toast('게스트는 봇 플레이를 사용할 수 없습니다. 로그인해주세요.');return}startBot()};makeChoices();applyTheme();renderUserArea();renderHome();window.ChessNovaTestResults=runSelfTests();if(!session){setTimeout(()=>openAuthModal(false),80)}
+
+
+if(!window.__chessMasterKeysBound){
+  window.__chessMasterKeysBound=true;
+  window.addEventListener('keydown',e=>{
+    const tag=(e.target?.tagName||'').toLowerCase();if(['input','textarea','select'].includes(tag))return;
+    if(e.key==='Escape'){return}
+    if(currentPage==='analysis'&&analysisData){
+      if(e.key==='ArrowLeft'){e.preventDefault();analysisIndex=Math.max(0,analysisIndex-1);renderAnalysis();}
+      else if(e.key==='ArrowRight'){e.preventDefault();analysisIndex=Math.min((analysisData.snapshots?.length||1)-1,analysisIndex+1);renderAnalysis();}
+      else if(e.key==='Home'){e.preventDefault();analysisIndex=0;renderAnalysis();}
+      else if(e.key==='End'){e.preventDefault();analysisIndex=Math.max(0,(analysisData.snapshots?.length||1)-1);renderAnalysis();}
+    }
+    if(e.key.toLowerCase()==='r'&&activeGame&&!activeGame.finished){activeGame.flip=!activeGame.flip;renderAllGame(activeGame)}
+    if(e.key.toLowerCase()==='m'){settings.sound=!settings.sound;saveJson('cn-settings',settings);toast(settings.sound?'사운드 켜짐':'사운드 꺼짐')}
+  });
+}
+
+// ----- Online P2P -----
+function ensurePeerJS(){
+  if(typeof Peer!=='undefined')return Promise.resolve(true);
+  if(window.__peerLoader)return window.__peerLoader;
+  window.__peerLoader=new Promise(resolve=>{
+    const script=document.createElement('script');
+    script.src='https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js';
+    script.async=true;
+    script.onload=()=>resolve(typeof Peer!=='undefined');
+    script.onerror=()=>resolve(false);
+    document.head.appendChild(script);
+  });
+  return window.__peerLoader;
+}
+function peerId(room){return 'chessnova-room-'+room}
+function randomRoom(){return String(Math.floor(100000+Math.random()*900000))}
+function clearOnline(){try{online.conn?.close();online.peer?.destroy()}catch{}online={peer:null,conn:null,host:false,room:'',color:null,ready:false,time:10}}
+function onlineMessageStatus(t){const s=$('onlineStatus');if(s)s.textContent=t}
+function onlineUI(g,status){const root=$('onlineGame');root.style.display='block';root.innerHTML=`<div class="card center"><div class="muted">${g?.finished?'게임 종료':'온라인 상태'}</div><div id="onlineStatus" style="margin-top:6px;font-weight:800">${esc(status)}</div>${online.room?`<div class="roomCode">${esc(online.room)}</div><div class="actions" style="justify-content:center"><button class="btn" id="copyRoomCode">방번호 복사</button><button class="btn danger" id="cancelRoom">방 취소</button></div><div class="muted">상대에게 이 방번호를 알려주세요.</div>`:''}</div><div style="height:12px"></div>${g?'<div id="onlineBoardHost"></div>':''}`;if(online.room){$('copyRoomCode')?.addEventListener('click',()=>copyText(online.room).then(()=>toast('방번호를 복사했습니다.')));$('cancelRoom')?.addEventListener('click',()=>{clearOnline();$('onlineGame').style.display='none';$('onlineSetup').style.display='grid';toast('방 만들기를 취소했습니다.')});}if(g){renderGameIntoOnline(g);}}
+function renderGameIntoOnline(g){
+  const host=$('onlineBoardHost');if(!host)return;
+  host.innerHTML=gameViewHTML(g);
+  const board=qs('.board',host),svg=qs('.arrows',host),flip=!!g.flip;
+  const lm=g.selected?legalMoves(g.state).filter(m=>m.from[0]===g.selected[0]&&m.from[1]===g.selected[1]).map(m=>m.to):[];
+  renderBoard(board,g.state,{flip,selected:g.selected||null,legal:settings.legal?lm:[],last:settings.last?g.state.last:null,arrows:g.arrows,marks:g.marks,svg});
+  renderMoves(g,qs('#gameMoves',host));
+  qs('#whiteClock',host).textContent=formatClock(g.state.whiteTime);qs('#blackClock',host).textContent=formatClock(g.state.blackTime);
+  qs('#clockTop',host).classList.toggle('active',g.state.turn==='w');qs('#clockBottom',host).classList.toggle('active',g.state.turn==='b');
+  qs('#gameStatus',host).textContent=g.finished?`${gameResultLabel(g.result)} · ${g.reason}`:(g.state.turn==='w'?'백 차례':'흑 차례')+(inCheck(g.state,g.state.turn)?' · 체크':'');
+  setupBoardInteractions(board,svg,()=>g,{flip});
+  const wcap=qs('#whiteCaptured',host),bcap=qs('#blackCaptured',host);if(wcap)wcap.textContent=capturedHTML(g,'w');if(bcap)bcap.textContent=capturedHTML(g,'b');
+  const fullBtn=qs('#fullscreenBoard',host);if(fullBtn)fullBtn.onclick=async()=>{const shell=board.closest('.boardShell');try{if(!document.fullscreenElement)await shell.requestFullscreen();else await document.exitFullscreen()}catch{toast('전체화면을 사용할 수 없습니다.')}};
+  const takeBtn=qs('#takebackBtn',host);if(takeBtn){takeBtn.disabled=true;takeBtn.title='온라인 대국에서는 무르기를 사용할 수 없습니다.'}
+  qs('#flipBoard',host).onclick=()=>{g.flip=!g.flip;renderGameIntoOnline(g)};
+  qs('#resignBtn',host).onclick=()=>{if(!g.finished&&confirm('기권할까요?'))finishGame(g,g.state.turn==='w'?'blackWin':'whiteWin','기권')};
+  const drawBtn=qs('#drawBtn',host);
+  if(drawBtn){
+    drawBtn.disabled=!!g.finished||!!g.drawOffer;
+    drawBtn.onclick=()=>{
+      if(g.finished)return;
+      if(!online.conn?.open){toast('상대방과 연결되어 있지 않습니다.');return}
+      g.drawOffer=true;drawBtn.disabled=true;online.conn.send({type:'drawOffer'});
+      const status=qs('#gameStatus',host);if(status)status.textContent='무승부 제안을 보냈습니다.';
+    };
+  }
+  qs('#backSetup',host).onclick=()=>{stopTimer(g);activeGame=null;$('onlineGame').style.display='none';$('onlineSetup').style.display='grid';clearOnline()};
+  const rematch=qs('#rematchBtn',host);if(rematch)rematch.onclick=()=>requestRematch();
+}
+function onlineSendState(g){if(!online.conn?.open)return;online.conn.send({type:'state',state:{...serializeState(g.state),rep:g.rep,minutes:g.minutes,result:g.result,finished:g.finished,reason:g.reason,playerColor:g.playerColor}})}
+function serializeState(st){return {board:st.board,turn:st.turn,castle:st.castle,ep:st.ep,half:st.half,full:st.full,whiteTime:st.whiteTime,blackTime:st.blackTime,last:st.last,history:st.history,snapshots:st.snapshots}}
+function deserializeState(raw){const st={board:raw.board,turn:raw.turn,castle:raw.castle||{wK:true,wQ:true,bK:true,bQ:true},ep:raw.ep??null,half:raw.half??0,full:raw.full??1,whiteTime:raw.whiteTime??600,blackTime:raw.blackTime??600,last:raw.last||null,history:raw.history||[],snapshots:[]};st.snapshots=(raw.snapshots&&raw.snapshots.length?raw.snapshots.map(x=>({board:cloneBoard(x.board),turn:x.turn,castle:{...(x.castle||st.castle)},ep:x.ep??null,half:x.half??0,full:x.full??1,whiteTime:x.whiteTime??st.whiteTime,blackTime:x.blackTime??st.blackTime,last:x.last||null})): [makeSnapshot(st)]);return st}
+function showRoomCreateModal(){
+  return new Promise(resolve=>{
+    const overlay=document.createElement('div');overlay.className='modalOverlay';
+    const mins=Number($('onlineTimeChoices').dataset.value||10);
+    overlay.innerHTML=`<div class="roomCreateModal"><div class="statusRow"><div><h3 style="margin:0">방 만들기</h3><div class="muted" style="font-size:13px;margin-top:3px">자동 번호 또는 원하는 6자리 방번호를 사용할 수 있습니다.</div></div><button class="btn" data-close>취소</button></div><div style="height:14px"></div><div class="field"><label>게임 시간</label><div class="row" id="modalTimeChoices">${[1,5,10,20].map(v=>`<button class="choice ${v===mins?'active':''}" data-time="${v}">${v}분</button>`).join('')}</div></div><div style="height:10px"></div><div class="field"><label>방번호 입력</label><input id="roomCreateCode" class="roomModalCodeInput" inputmode="numeric" maxlength="6" placeholder="자동 생성하려면 비워두세요."></div><div class="muted" style="font-size:12px;margin-top:6px">직접 입력한 번호가 이미 사용 중이면 다른 번호를 선택해야 합니다.</div><div class="decisionActions"><button class="btn" data-auto>자동 생성</button><button class="btn primary" data-create>입력해서 만들기</button><button class="btn" data-cancel>취소</button></div></div>`;
+    document.body.appendChild(overlay);let chosen=mins;
+    qsa('[data-time]',overlay).forEach(b=>b.onclick=()=>{chosen=Number(b.dataset.time);qsa('[data-time]',overlay).forEach(x=>x.classList.toggle('active',x===b))});
+    overlay.querySelector('[data-auto]').onclick=()=>{resolve({code:randomRoom(),minutes:chosen});overlay.remove()};
+    overlay.querySelector('[data-create]').onclick=()=>{const code=overlay.querySelector('#roomCreateCode').value.trim();if(!/^\d{6}$/.test(code)){toast('6자리 숫자 방번호를 입력하세요.');return}resolve({code,minutes:chosen});overlay.remove()};
+    const cancel=()=>{overlay.remove();resolve(null)};overlay.querySelector('[data-cancel]').onclick=cancel;overlay.querySelector('[data-close]').onclick=cancel;overlay.addEventListener('click',e=>{if(e.target===overlay)cancel()});
+    overlay.querySelector('#roomCreateCode').focus();
+  });
+}
+async function createOnlineRoom(){
+  if(guestMode){toast('게스트는 온라인 플레이를 사용할 수 없습니다. 로그인해주세요.');return}
+  const choice=await showRoomCreateModal();if(!choice)return;
+  if(!(await ensurePeerJS())){toast('온라인 모듈을 불러오지 못했습니다. 인터넷 연결을 확인하세요.');onlineUI(null,'온라인 모듈을 불러오지 못했습니다. 인터넷 연결을 확인한 뒤 다시 시도하세요.');return}
+  $('onlineSetup').style.display='none';clearOnline();
+  const room=choice.code,minutes=choice.minutes;
+  online.room=room;online.host=true;online.color='w';online.time=minutes;
+  const g=makeGame(minutes,'online','w');
+  onlineUI(null,'방을 만들었습니다. 상대방 연결을 기다리는 중…');
+  const peer=new Peer(peerId(room));online.peer=peer;
+  peer.on('open',()=>onlineUI(null,'방이 열렸습니다. 상대방에게 6자리 방번호를 알려주세요.'));
+  peer.on('connection',conn=>{if(online.conn){conn.close();toast('이미 상대방이 연결되어 있습니다.');return}online.conn=conn;setupHostConnection(conn,g)});
+  peer.on('error',err=>{onlineUI(null,'방 연결 오류: '+(err?.type||'알 수 없는 오류'));toast('방을 만들 수 없습니다. 다른 번호로 다시 시도하세요.')});
+}
+function setupHostConnection(conn,g){conn.on('open',()=>{online.ready=true;activeGame=g;onlineUI(g,'상대방이 연결되었습니다. 백으로 시작합니다.');online.conn.send({type:'init',room:online.room,color:'b',minutes:g.minutes,state:serializeState(g.state),host:true});startTimer(g,refreshClockUI);renderGameIntoOnline(g)});conn.on('data',msg=>onOnlineData(msg,g));conn.on('close',()=>{if(!g.finished)toast('상대방 연결이 종료되었습니다.');online.ready=false;onlineMessageStatus('상대방 연결 끊김')})}
+async function joinOnlineRoom(){
+  if(guestMode){toast('게스트는 온라인 플레이를 사용할 수 없습니다. 로그인해주세요.');return}
+  if(!(await ensurePeerJS())){toast('온라인 모듈을 불러오지 못했습니다. 인터넷 연결을 확인하세요.');onlineUI(null,'온라인 모듈을 불러오지 못했습니다. 인터넷 연결을 확인한 뒤 다시 시도하세요.');return}
+  const room=$('joinCode').value.trim();
+  if(!/^\d{6}$/.test(room)){toast('6자리 방번호를 입력하세요.');return}
+  $('onlineSetup').style.display='none';clearOnline();
+  online.room=room;online.host=false;online.color='b';
+  const peer=new Peer();online.peer=peer;onlineUI(null,'방 연결 중…');
+  peer.on('open',()=>{const conn=peer.connect(peerId(room),{reliable:true});online.conn=conn;conn.on('open',()=>onlineUI(null,'방에 연결되었습니다. 호스트의 게임 정보를 받는 중…'));conn.on('data',msg=>onOnlineData(msg,null));conn.on('error',()=>toast('데이터 연결 오류'));conn.on('close',()=>toast('호스트와 연결이 종료되었습니다.'))});
+  peer.on('error',err=>{onlineUI(null,'연결 실패: '+(err?.type||'방을 찾을 수 없습니다.'));toast('방번호가 잘못되었거나 방이 닫혔습니다.')});
+}
+function onOnlineData(msg,gHost){
+  if(!msg)return;
+  if(msg.type==='init'&&!online.host){
+    online.color='b';online.time=msg.minutes;
+    const st=deserializeState(msg.state);
+    const ng={id:uid(),mode:'online',playerColor:'b',difficulty:'',minutes:msg.minutes,state:st,rep:msg.state.rep||{[positionKey(st)]:1},startedAt:Date.now(),finished:false,result:null,reason:null,timer:null,aiTimer:null,arrows:[],marks:[],drawOffer:false,flip:true};
+    activeGame=ng;online.ready=true;$('onlineSetup').style.display='none';onlineUI(ng,'상대방과 연결되었습니다.');startTimer(ng,refreshClockUI);return
+  }
+  if(msg.type==='drawOffer'){
+    const g=activeGame||gHost;if(!g||g.finished)return;
+    g.drawOffer=false;
+    showDrawOfferModal(g);
+    return;
+  }
+  if(msg.type==='drawAccept'){
+    const g=activeGame||gHost;if(!g||g.finished)return;
+    g.drawOffer=false;finishGame(g,'draw','무승부 합의');return;
+  }
+  if(msg.type==='drawDecline'){
+    const g=activeGame||gHost;if(!g||g.finished)return;
+    g.drawOffer=false;renderAllGame(g);toast('상대방이 무승부 제안을 거절했습니다.');return;
+  }
+  if(msg.type==='moveRequest'&&online.host&&gHost&&!gHost.finished){const m=msg.move;const legal=legalMoves(gHost.state).find(x=>x.from[0]===m.from[0]&&x.from[1]===m.from[1]&&x.to[0]===m.to[0]&&x.to[1]===m.to[1]&&(!x.promotion||x.promotion===m.promotion));if(!legal){return}if(gHost.state.turn!=='b')return;executeMove(gHost,{...legal},true);onlineSendState(gHost);return}
+  if(msg.type==='state'&&!online.host){if(!activeGame)return;activeGame.state=deserializeState(msg.state);activeGame.lastTick=Date.now();activeGame.rep=msg.state.rep||activeGame.rep;activeGame.minutes=msg.minutes||activeGame.minutes;activeGame.finished=msg.finished;activeGame.result=msg.result;activeGame.reason=msg.reason;renderGameIntoOnline(activeGame);return}
+  if(msg.type==='gameover'){const g=activeGame;if(!g)return;g.finished=true;g.result=msg.result;g.reason=msg.reason;g.state.history=msg.history||g.state.history;g.state.whiteTime=msg.whiteTime??g.state.whiteTime;g.state.blackTime=msg.blackTime??g.state.blackTime;stopTimer(g);saveFinishedGame(g);renderGameIntoOnline(g);analysisData=loadJson('cn-history-'+(session||'guest'),[])[0]||null;setTimeout(()=>showPage('analysis'),200);return}
+  if(msg.type==='rematchRequest'&&online.host&&gHost){toast('상대방의 재대결 요청을 수락했습니다.');const ng=makeGame(gHost.minutes,'online','w');activeGame=ng;online.conn?.send({type:'rematchStart',minutes:gHost.minutes,state:serializeState(ng.state)});renderGameIntoOnline(ng);startTimer(ng,refreshClockUI);return}
+  if(msg.type==='rematchStart'&&!online.host){const ng=makeGame(msg.minutes,'online','b');ng.state=deserializeState(msg.state);ng.minutes=msg.minutes;activeGame=ng;renderGameIntoOnline(ng);startTimer(ng,refreshClockUI);toast('재대결이 시작되었습니다.');}
+}
+function requestRematch(){if(!online.conn?.open){toast('상대방과 연결되어 있지 않습니다.');return}online.conn.send({type:'rematchRequest'});toast('재대결 요청을 보냈습니다.')}
+$('createRoom').onclick=createOnlineRoom;$('joinRoom').onclick=joinOnlineRoom;$('joinCode').addEventListener('input',e=>{e.target.value=e.target.value.replace(/\D/g,'').slice(0,6)});$('clearJoinCode').onclick=()=>{$('joinCode').value='';$('joinCode').focus()};$('joinCode').addEventListener('keydown',e=>{if(e.key==='Enter')joinOnlineRoom()});
+
+// Fix online host's state receiver to keep repetition data.
+
+function runSelfTests(){
+  const out=[];const check=(name,ok)=>out.push({name,ok});
+  try{
+    const st=newState(1);check('초기 보드',st.board[6][4]==='P'&&st.board[1][4]==='p');
+    check('초기 합법 수 20개',legalMoves(st).length===20);
+    const e4=moveMatch(st,[6,4],[4,4])[0];check('e2-e4',!!e4);const a=applyMove(st,e4).state;check('e4 반영',a.board[4][4]==='P'&&a.turn==='b');
+    check('적 킹 직접 잡기 차단',!legalMoves(a).some(m=>a.board[m.to[0]][m.to[1]]==='K'));
+    const stMate=newState(1);const seq=[[6,5,5,5],[1,4,3,4],[6,6,4,6],[0,3,4,7]];let cur=stMate,ok=true;for(const [fr,fc,tr,tc] of seq){const m=moveMatch(cur,[fr,fc],[tr,tc])[0];if(!m){ok=false;break}cur=applyMove(cur,m).state}check('체크메이트 기본 검사',ok&&terminalOutcome(cur,1)?.reason==='체크메이트');
+    const stale={board:[[null,null,null,null,null,null,null,'k'],[null,null,null,null,null,'K',null,null],[null,null,null,null,null,null,'Q',null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null]],turn:'b',castle:{wK:false,wQ:false,bK:false,bQ:false},ep:null,half:0,full:1,whiteTime:60,blackTime:60,last:null,history:[],snapshots:[]};check('스테일메이트 기본 검사',terminalOutcome(stale,1)?.reason==='스테일메이트');
+    const insuff=newState(1);insuff.board=Array.from({length:8},()=>Array(8).fill(null));insuff.board[0][0]='k';insuff.board[7][7]='K';check('기물 부족 무승부',insufficient(insuff)===true);
+    check('화살표 수평',arrowKind([4,1],[4,6])==='horizontal');check('화살표 수직',arrowKind([4,1],[1,1])==='vertical');check('화살표 대각선',arrowKind([4,1],[1,4])==='diagonal');check('나이트 화살표',arrowKind([4,1],[2,2])==='knight');check('화살표 같은 칸 표시',arrowKind([4,1],[4,1])==='point');const ag=arrowPoints({from:[4,1],to:[2,2],kind:'knight'},false);check('나이트 L자 화살표 3점',ag.points.length===3&&ag.points.every(q=>Number.isFinite(q.x)&&Number.isFinite(q.y)));
+    check('봇 난이도 6개',Object.keys(BOT_LEVELS).length===6);
+    for(const key of Object.keys(BOT_LEVELS)){const m=chooseAIMove(newState(1),key);check(`${key} 실제 수 생성`,!!m&&Array.isArray(m.from)&&Array.isArray(m.to));}
+    // Castling regression check.
+    const castle={board:Array.from({length:8},()=>Array(8).fill(null)),turn:'w',castle:{wK:true,wQ:true,bK:true,bQ:true},ep:null,half:0,full:1,whiteTime:60,blackTime:60,last:null,history:[],snapshots:[]};
+    castle.board[7][4]='K';castle.board[7][0]='R';castle.board[7][7]='R';castle.board[0][4]='k';castle.board[0][0]='r';castle.board[0][7]='r';
+    check('킹사이드 캐슬링 생성',!!moveMatch(castle,[7,4],[7,6]).find(x=>x.castle==='K'));
+    check('퀸사이드 캐슬링 생성',!!moveMatch(castle,[7,4],[7,2]).find(x=>x.castle==='Q'));
+    // En-passant regression check: white pawn e5 captures black pawn d5 via d6.
+    const epst={board:Array.from({length:8},()=>Array(8).fill(null)),turn:'w',castle:{wK:false,wQ:false,bK:false,bQ:false},ep:[2,3],half:0,full:3,whiteTime:60,blackTime:60,last:null,history:[],snapshots:[]};
+    epst.board[7][4]='K';epst.board[0][4]='k';epst.board[3][4]='P';epst.board[3][3]='p';
+    const epm=moveMatch(epst,[3,4],[2,3]).find(x=>x.enPassant);check('앙파상 생성',!!epm);
+    if(epm){const epa=applyMove(epst,epm).state;check('앙파상 실행',epa.board[2][3]==='P'&&epa.board[3][3]===null);}
+    // Promotion regression check.
+    const prom={board:Array.from({length:8},()=>Array(8).fill(null)),turn:'w',castle:{wK:false,wQ:false,bK:false,bQ:false},ep:null,half:0,full:1,whiteTime:60,blackTime:60,last:null,history:[],snapshots:[]};
+    prom.board[7][4]='K';prom.board[0][4]='k';prom.board[1][0]='P';
+    const pms=moveMatch(prom,[1,0],[0,0]);check('프로모션 4선택', ['q','r','b','n'].every(t=>pms.some(x=>x.promotion===t)));
+    const pq=pms.find(x=>x.promotion==='q');if(pq){const pa=applyMove(prom,pq).state;check('퀸 프로모션 실행',pa.board[0][0]==='Q');}
+    // FEN roundtrip.
+    const fen=stateToFEN(newState(1));const fs=fenToState(fen);check('FEN 왕복',fen===stateToFEN(fs));
+    check('PGN 기본 생성',typeof historyToPGN({history:[],result:'draw'})==='string');
+  }catch(e){out.push({name:'self-test exception',ok:false,error:String(e)})}
+  window.ChessMasterTestResults=out;window.ChessNovaTestResults=out;return out;
+}
+window.ChessMaster={newState,makeGame,legalMoves,chooseAIMove,applyMove,terminalOutcome,insufficient,inCheck,sanFor,arrowKind,drawArrows,BOT_LEVELS,backupUserData,restoreUserData};
+window.ChessNova=window.ChessMaster;
+})();
+</script>
+</body>
+</html>
